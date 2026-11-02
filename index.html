@@ -244,7 +244,11 @@ table.lv tfoot td{font-weight:700;border-top:2px solid var(--ink);position:stick
 .xcard strong{display:block;font-size:14px}
 .xcard span{font-size:12px;color:var(--muted)}
 .xcard .row2{flex:0 0 auto}
-#vp{touch-action:pan-x pan-y}
+#vp{touch-action:pan-x pan-y;scrollbar-width:none;overscroll-behavior:contain}
+#vp::-webkit-scrollbar{display:none}
+#vp,#stage:not(.brush){cursor:grab}
+#vp.panning,#vp.panning *{cursor:grabbing!important}
+#sizer{margin:0 auto}
 #vp.drawing{touch-action:none}
 #stage .bin,.zone .zl{touch-action:none}
 button,.chip{-webkit-tap-highlight-color:transparent}
@@ -1873,7 +1877,7 @@ stage.addEventListener('pointerdown',e=>{
   if(S.brush&&S.canWrite){
     if(e.pointerType==='touch'){S.tap={cell,x:e.clientX,y:e.clientY};return}
     addBin(cell,S.brush);return}
-  if(S.sel||S.selZone||S.selSec){S.sel=null;S.selZone=null;S.selSec=null;renderBins();renderSecs();renderZones();renderSel()}
+  if(e.pointerType==='touch'&&(S.sel||S.selZone||S.selSec)){S.sel=null;S.selZone=null;S.selSec=null;renderBins();renderSecs();renderZones();renderSel()}
 });
 stage.addEventListener('pointermove',e=>{
   if(S.tap&&Math.hypot(e.clientX-S.tap.x,e.clientY-S.tap.y)>8) S.tap=null;
@@ -1947,8 +1951,8 @@ document.addEventListener('keydown',e=>{
 });
 
 /* ---------- controles ---------- */
-$('zin').onclick=()=>{S.fit=false;S.scale=Math.min(8,S.scale*1.25);applyScale()};
-$('zout').onclick=()=>{S.fit=false;S.scale=Math.max(.2,S.scale/1.2);applyScale()};
+$('zin').onclick=()=>zoomBy(1.5);
+$('zout').onclick=()=>zoomBy(1/1.5);
 $('zfit').onclick=()=>{S.fit=true;applyScale()};
 $('gridbtn').onclick=e=>{S.grid=!S.grid;e.currentTarget.setAttribute('aria-pressed',String(S.grid));const g=$('gridlayer');if(g)g.hidden=!S.grid};
 $('grp').onchange=e=>{S.group=e.target.value;renderBins()};
@@ -1978,16 +1982,73 @@ $('pickbtn').onclick=()=>S.picker?closePicker():openPicker();
 $('panelbtn').onclick=()=>setDrawer(!S.drawer);
 $('closedrawer').onclick=()=>setDrawer(false);
 $('bx').onclick=()=>{S.brush=null;renderAll()};
+/* ---------- navegación tipo Google Maps: arrastrar, rueda, doble clic ---------- */
+function anchorZoom(ns,cx,cy){
+  const vp=$('vp'),st=$('stage'); if(!curMap()) return;
+  ns=Math.max(.2,Math.min(8,ns)); if(Math.abs(ns-S.scale)<1e-4) return;
+  const r=st.getBoundingClientRect(), bx=(cx-r.left)/S.scale, by=(cy-r.top)/S.scale;
+  S.fit=false; S.scale=ns; applyScale();
+  const r2=st.getBoundingClientRect();
+  vp.scrollLeft+= r2.left+bx*ns-cx; vp.scrollTop+= r2.top+by*ns-cy;
+}
+let zanim=0;
+function zoomBy(f,cx,cy){
+  const vp=$('vp'),vr=vp.getBoundingClientRect(); if(cx==null){cx=vr.left+vr.width/2;cy=vr.top+vr.height/2}
+  const from=S.scale,to=Math.max(.2,Math.min(8,from*f)),t0=performance.now(),id=++zanim;
+  const step=t=>{if(id!==zanim)return;const k=Math.min(1,(t-t0)/180),e=1-Math.pow(1-k,3);anchorZoom(from+(to-from)*e,cx,cy);if(k<1)requestAnimationFrame(step)};
+  requestAnimationFrame(step);
+}
+(function(){
+  const vp=$('vp'); let pan=null,inertia=0;
+  const stopInertia=()=>{inertia++};
+  vp.addEventListener('wheel',e=>{
+    if(!curMap()) return; e.preventDefault(); zanim++;
+    const dy=e.deltaMode===1?e.deltaY*16:e.deltaMode===2?e.deltaY*400:e.deltaY;
+    anchorZoom(S.scale*Math.exp(-dy*(e.ctrlKey?.01:.0018)),e.clientX,e.clientY);
+  },{passive:false});
+  function panStart(e){
+    stopInertia(); zanim++;
+    pan={x:e.clientX,y:e.clientY,l:vp.scrollLeft,t:vp.scrollTop,moved:false,pts:[[performance.now(),e.clientX,e.clientY]],id:e.pointerId};
+    try{vp.setPointerCapture(e.pointerId)}catch(_){}
+  }
+  S.panStart=panStart;
+  vp.addEventListener('pointerdown',e=>{
+    if(e.pointerType==='touch'||S.pinch) return;
+    if(e.button===1){e.preventDefault();panStart(e);return}
+    if(e.button!==0||S.brush||S.tool) return;
+    const t=e.target; if(t.closest&&!t.closest('.bin,.zl,.sl,button,input,select,a,textarea')) panStart(e);
+  },true);
+  vp.addEventListener('pointermove',e=>{
+    if(!pan||e.pointerId!==pan.id) return;
+    const dx=e.clientX-pan.x,dy=e.clientY-pan.y;
+    if(!pan.moved&&Math.hypot(dx,dy)>4){pan.moved=true;vp.classList.add('panning');hideTip();S.tap=null}
+    if(!pan.moved) return;
+    vp.scrollLeft=pan.l-dx; vp.scrollTop=pan.t-dy;
+    const n=performance.now(); pan.pts.push([n,e.clientX,e.clientY]); while(pan.pts.length>2&&n-pan.pts[0][0]>90) pan.pts.shift();
+  });
+  const end=e=>{
+    if(!pan||(e&&e.pointerId!==pan.id)) return; const p=pan; pan=null; vp.classList.remove('panning');
+    try{vp.releasePointerCapture(p.id)}catch(_){}
+    if(!p.moved){ if(S.sel||S.selZone||S.selSec){S.sel=null;S.selZone=null;S.selSec=null;renderBins();renderSecs();renderZones();renderSel()} return }
+    S.panMovedAt=performance.now();
+    const a=p.pts[0],b=p.pts[p.pts.length-1],dt=b[0]-a[0]; if(dt<5||performance.now()-b[0]>80) return;
+    let vx=(b[1]-a[1])/dt,vy=(b[2]-a[2])/dt; const id=++inertia; let last=performance.now();
+    const step=t=>{if(id!==inertia)return;const d=t-last;last=t;vp.scrollLeft-=vx*d;vp.scrollTop-=vy*d;const f=Math.pow(.94,d/16);vx*=f;vy*=f;if(Math.hypot(vx,vy)>.03)requestAnimationFrame(step)};
+    requestAnimationFrame(step);
+  };
+  vp.addEventListener('pointerup',end); vp.addEventListener('pointercancel',end);
+  vp.addEventListener('dblclick',e=>{
+    if(S.brush||S.tool||e.target.closest('.bin,.zl,.sl,button')||!curMap()) return;
+    zoomBy(e.shiftKey?1/2:2,e.clientX,e.clientY);
+  });
+})();
 (function(){
   const vp=$('vp'); let d0=0,s0=1;
   const dist=t=>Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
   vp.addEventListener('touchstart',e=>{if(e.touches.length===2){d0=dist(e.touches);s0=S.scale;S.pinch=true;S.tap=null;S.drag=null;S.zdraw=null;S.zmove=null;showBox('ghost',null);showRect('zghost',null)}},{passive:true});
   vp.addEventListener('touchmove',e=>{
     if(e.touches.length!==2||!d0) return; e.preventDefault();
-    const r=vp.getBoundingClientRect(),mx=(e.touches[0].clientX+e.touches[1].clientX)/2-r.left,my=(e.touches[0].clientY+e.touches[1].clientY)/2-r.top;
-    const bx=(vp.scrollLeft+mx)/S.scale,by=(vp.scrollTop+my)/S.scale;
-    S.fit=false; S.scale=Math.max(.2,Math.min(8,s0*dist(e.touches)/d0)); applyScale();
-    vp.scrollLeft=bx*S.scale-mx; vp.scrollTop=by*S.scale-my;
+    anchorZoom(s0*dist(e.touches)/d0,(e.touches[0].clientX+e.touches[1].clientX)/2,(e.touches[0].clientY+e.touches[1].clientY)/2);
   },{passive:false});
   vp.addEventListener('touchend',e=>{if(e.touches.length<2){d0=0;setTimeout(()=>{S.pinch=false},120)}});
 })();
