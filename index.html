@@ -71,7 +71,7 @@ h1{font-family:var(--f-display);font-size:18px;line-height:1.1;margin:0;letter-s
 #stage{position:absolute;left:0;top:0;transform-origin:0 0;background:var(--map);color:var(--map-ink);user-select:none;-webkit-user-select:none}
 #stage .bgimg{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;pointer-events:none;-webkit-user-drag:none}
 #stage .gridl{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(to right,var(--map-line) 1px,transparent 1px),linear-gradient(to bottom,var(--map-line) 1px,transparent 1px);box-shadow:inset -1px -1px 0 var(--map-line)}
-#stage .bin{position:absolute;display:flex;align-items:center;justify-content:center;border-radius:2px;border:1px solid rgba(0,0,0,.3);font-family:var(--f-mono);font-weight:600;letter-spacing:-.04em;white-space:nowrap;overflow:hidden;cursor:grab}
+#stage .bin{position:absolute;display:flex;align-items:center;justify-content:center;border-radius:0;border:1px solid #000;font-family:var(--f-mono);font-weight:600;letter-spacing:-.04em;white-space:nowrap;overflow:hidden;cursor:grab}
 #stage .bin.dim{opacity:.16}
 #stage .bin.sel{outline:3px solid #0b6bff;outline-offset:1px;z-index:5}
 #stage #hover{position:absolute;border:2px dashed #0b6bff;border-radius:4px;pointer-events:none;display:none;z-index:6}
@@ -1054,7 +1054,7 @@ async function mapCanvas(m,o){
   g.textAlign='center'; g.textBaseline='middle'; const lay=S.names?labelLayout(m.id):null;
   for(const b of S.bins.values()){ if(b.map!==m.id) continue;
     const l=T(b.type), t=lay&&lay.get(b.id), w=t?t.w*k:PW-2*k, x=t?(b.c-.5)*PW-w/2:(b.c-1)*PW+k, y=(b.r-1)*P+k, h=P-2*k;
-    g.fillStyle=l.bg;g.fillRect(x,y,w,h);g.strokeStyle='rgba(0,0,0,.35)';g.lineWidth=Math.max(1,k);g.strokeRect(x+.5,y+.5,w-1,h-1);
+    g.fillStyle=l.bg;g.fillRect(x,y,w,h);g.strokeStyle='#000000';g.lineWidth=Math.max(1,k*.8);g.strokeRect(x+.5,y+.5,w-1,h-1);
     let fs=t?t.fs*k:P*(l.code.length<=3?.5:l.code.length<=5?.4:l.code.length<=6?.33:.3);
     g.font=`${t?700:600} ${fs}px "IBM Plex Mono",monospace`; const tw=g.measureText(l.code).width; if(tw>w-2){fs*= (w-2)/tw; g.font=`${t?700:600} ${fs}px "IBM Plex Mono",monospace`}
     g.fillStyle=l.fg; g.fillText(l.code,x+w/2,y+h/2+.5);
