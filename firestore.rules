@@ -1,0 +1,16 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Solo las dos cuentas internas (lectura y edicion) pueden entrar.
+    function isReader() {
+      return request.auth != null && request.auth.token.email in ['lectura@mapas-residuos.app', 'edicion@mapas-residuos.app'];
+    }
+    function isEditor() {
+      return request.auth != null && request.auth.token.email == 'edicion@mapas-residuos.app';
+    }
+    match /{document=**} {
+      allow read: if isReader();
+      allow write: if isEditor();
+    }
+  }
+}
