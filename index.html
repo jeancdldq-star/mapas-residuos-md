@@ -37,6 +37,11 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:1
 button,select,input{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button,select,input,textarea,label{touch-action:manipulation}
+h1,h2,h3{text-wrap:balance}
+select.field{background-color:var(--panel);color:var(--ink)}
+.btn:not(.primary):not(.danger):hover{background:var(--accent-soft)}
+.btn:active{transform:translateY(1px)}
 .app{height:100%;display:flex;flex-direction:column;gap:8px;padding-block:8px;min-height:0}
 .top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
 .brand{display:flex;align-items:center;gap:10px}
@@ -105,7 +110,7 @@ h1{font-family:var(--f-display);font-size:18px;line-height:1.1;margin:0;letter-s
 .card{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:10px;min-width:0}
 .card h2{font-family:var(--f-display);font-size:13px;margin:0;letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
 .cardhead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
-.chip{display:inline-flex;align-items:center;justify-content:center;min-width:46px;padding:2px 7px;border-radius:4px;border:1px solid rgba(0,0,0,.28);font-family:var(--f-mono);font-weight:600;font-size:12px}
+.chip{display:inline-flex;align-items:center;justify-content:center;min-width:46px;padding:2px 7px;border-radius:0;border:1px solid #000;font-family:var(--f-mono);font-weight:600;font-size:12px}
 label.lbl{font-size:12px;color:var(--muted);display:block;margin-bottom:3px}
 .req{color:var(--danger);font-weight:600}
 .err{color:var(--danger);font-size:12px;margin-top:3px}
@@ -216,27 +221,29 @@ table.lv tfoot td{font-weight:700;border-top:2px solid var(--ink);position:stick
 .printback{position:fixed;inset:0;z-index:60;background:#e9ece9;overflow:auto;display:flex;flex-direction:column;align-items:center;padding:0 0 24px}
 .ptools{position:sticky;top:0;z-index:2;width:100%;background:var(--panel);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .ptools .hint{flex:1 1 220px}
-.sheet{background:#fff;color:#111;margin:16px;padding:12mm;width:min(1120px,calc(100% - 32px));box-shadow:var(--shadow);display:grid;gap:8mm;font-family:var(--f-body)}
-.sheet.land{grid-template-columns:minmax(0,1fr) 72mm}
-.sheet .shead{grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid #111;padding-bottom:3mm}
+.sheet{background:#fff;color:#111;margin:16px;padding:12mm;width:min(1120px,calc(100% - 32px));box-shadow:var(--shadow);display:flex;flex-direction:column;gap:6mm;font-family:var(--f-body)}
+.sheet.port{width:min(794px,calc(100% - 32px))}
+.sheet .shead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:2px solid #111;padding-bottom:3mm}
 .sheet .shead h2{margin:0;font-family:var(--f-display);font-size:20px}
 .sheet .shead span{font-size:12px;color:#444}
-.sheet .pmap{min-width:0;border:1px solid #bbb;line-height:0}
-.sheet .pmap img{width:100%;height:auto;display:block}
-.sheet.land .pmap{align-self:start}
-.sheet .pleg h3{margin:0 0 2mm;font-size:12px;letter-spacing:.04em;text-transform:uppercase}
-.sheet .pleg ul{list-style:none;margin:0;padding:0;font-size:10.5px}
-.sheet.port .pleg ul{columns:2;column-gap:8mm}
-.sheet .pleg li{display:grid;grid-template-columns:15mm minmax(0,1fr) auto;gap:2mm;align-items:center;padding:.6mm 0;break-inside:avoid}
-.sheet .pleg .chip{min-width:0;width:100%;font-size:9px;padding:1px 2px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.sheet .pmap{min-width:0;line-height:0;display:flex;justify-content:center}
+.sheet .pmap img{display:block;max-width:100%;height:auto;border:1px solid #bbb}
+.sheet.land .pmap img{max-height:158mm;width:auto}
+.sheet.port .pmap img{max-height:245mm;width:auto}
+.sheet .pleg ul{list-style:none;margin:0;padding:0;font-size:12px;columns:3;column-gap:8mm}
+.sheet.port .pleg ul{columns:2}
+.sheet .pleg li{display:grid;grid-template-columns:17mm minmax(0,1fr) auto;gap:3mm;align-items:center;padding:1mm 0;break-inside:avoid}
+.sheet .pleg .chip{min-width:0;width:100%;font-size:10px;padding:1px 2px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .sheet .pleg b{font-family:var(--f-mono);font-weight:600}
-.sheet .sfoot{grid-column:1/-1;font-size:10.5px;color:#555;border-top:1px solid #ccc;padding-top:2mm;display:flex;justify-content:space-between}
+.sheet .ptotal{display:flex;justify-content:space-between;gap:12px;margin-top:4mm;padding-top:2mm;border-top:1px solid #111;font-size:13px;max-width:70mm}
+.sheet .sfoot{font-size:10.5px;color:#555;border-top:1px solid #ccc;padding-top:2mm;display:flex;justify-content:space-between}
 @media print{
   html,body{height:auto!important;overflow:visible!important;background:#fff!important;padding:0!important}
   body>*:not(#printview){display:none!important}
   #printview{position:static!important;display:block!important;background:#fff!important;overflow:visible!important;padding:0!important}
   .ptools{display:none!important}
   .sheet{margin:0!important;padding:0!important;width:100%!important;box-shadow:none!important}
+  .sheet.pagemap{break-after:page}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 .xcard{border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
@@ -374,7 +381,7 @@ button,.chip{-webkit-tap-highlight-color:transparent}
         </div>
         <div>
           <label class="lbl" for="q">Buscar tipo</label>
-          <input class="field" id="q" type="search" placeholder="Abreviación o nombre">
+          <input class="field" id="q" type="search" placeholder="Abreviación o nombre…" spellcheck="false" autocomplete="off">
         </div>
         <div class="hint">Pulsa un tipo para elegirlo como pincel; el panel se cierra y puedes pulsar celdas del mapa para colocarlo.</div>
         <div class="legend" id="legend"></div>
@@ -408,7 +415,10 @@ const blobUrl=id=>(window.__imgUrl?window.__imgUrl(id):'/_blob/'+id);
 const colName=n=>{let s='';while(n>0){const r=(n-1)%26;s=String.fromCharCode(65+r)+s;n=Math.floor((n-1)/26)}return s};
 const cellRef=(r,c)=>colName(c)+r;
 const bid=(map,r,c)=>map+'_'+r+'_'+c;
-function el(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
+function el(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;
+  if(tag==='input'||tag==='textarea'){e.spellcheck=false;e.setAttribute('autocomplete','off')}
+  if(cls&&/(^| )(chip|bin)( |$)/.test(cls))e.translate=false;
+  return e}
 const sigOf=m=>[m.id,m.cols,m.rows,m.cw||1,m.img?m.img.id:'',m.bgOpacity].join('|');
 
 /* ---------- toast ---------- */
@@ -917,7 +927,7 @@ function askName(force){
   const m=el('div','modal'); m.setAttribute('role','dialog'); m.setAttribute('aria-modal','true'); m.setAttribute('aria-label','Tu nombre'); m.style.padding='18px';
   m.append(el('h2',null,'¿Cómo te llamas?'));
   const p=el('p','hint','Tu nombre quedará en el historial junto a cada cambio que hagas. No hace falta contraseña.'); p.style.margin='8px 0 12px'; m.append(p);
-  const i=el('input','field'); i.type='text'; i.maxLength=40; i.placeholder='Nombre'; i.value=WHO; i.autocomplete='name'; i.setAttribute('aria-label','Tu nombre');
+  const i=el('input','field'); i.type='text'; i.maxLength=40; i.placeholder='Tu nombre…'; i.value=WHO; i.autocomplete='name'; i.setAttribute('aria-label','Tu nombre');
   const er=el('div','hint',''); er.style.color='var(--danger,#c0392b)'; er.hidden=true;
   const row=el('div'); row.style.cssText='display:flex;gap:8px;justify-content:flex-end;margin-top:14px';
   const ok=el('button','btn primary','Entrar'); ok.type='button';
@@ -947,7 +957,7 @@ function renderHistory(){
   const meta=el('div','lvmeta'); meta.append(el('span',null,'Se muestran los últimos '+S.log.length+' cambios'));
   hl.append(meta); const x=el('button','btn','Cerrar ✕'); x.type='button'; x.onclick=closeHistory; head.append(hl,x); modal.append(head);
   const tools=el('div','lvtools');
-  const q=el('input','field'); q.id='hq'; q.type='search'; q.placeholder='Buscar en el historial'; q.value=histQ;
+  const q=el('input','field'); q.id='hq'; q.type='search'; q.placeholder='Buscar en el historial…'; q.value=histQ;
   q.oninput=()=>{histQ=q.value;const p=q.selectionStart;renderHistory();const n=$('hq');n.focus();try{n.setSelectionRange(p,p)}catch(_){}};
   const sm=el('select','field'); sm.setAttribute('aria-label','Filtrar por planta');
   const o0=el('option',null,'Todas las plantas'); o0.value=''; sm.append(o0);
@@ -1104,37 +1114,39 @@ class MiniPdf{
 }
 function jpegBytes(cv){const b64=cv.toDataURL('image/jpeg',.92).split(',')[1],bin=atob(b64),o=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)o[i]=bin.charCodeAt(i);return o}
 async function buildPdf(list){
+  /* Hoja 1: la planta con sus papeleras. Hoja 2 (y siguientes): la leyenda. */
   const pdf=new MiniPdf();
-  const lay=(W,H)=>{const lw=W>H?76:70,x=10,y=26;return {W,H,lw,x,y,w:W-20-lw-6,h:H-y-16}};
   for(const m of list){
     const cv=await mapCanvas(m,{maxW:2600,grid:S.grid});
-    const fit=L=>Math.min(L.w/cv.width,L.h/cv.height),La=lay(297,210),Lp=lay(210,297);
-    const land=fit(La)*fit(La)>=fit(Lp)*fit(Lp),L=land?La:Lp,f=fit(L);
-    pdf.addPage(L.W,L.H);
-    pdf.text('Mapa de residuos - '+m.name,10,14,15,{bold:true,color:[20,20,20]});
-    pdf.text('Fecha: '+todayStr(),L.W-10,14,9,{align:'right',color:[90,90,90]});
-    pdf.line(10,18,L.W-10,18,.5,[20,20,20]);
-    const iw=cv.width*f,ih=cv.height*f; pdf.image(jpegBytes(cv),cv.width,cv.height,L.x,L.y,iw,ih); pdf.rect(L.x,L.y,iw,ih,{stroke:[170,170,170],lw:.2});
-    const items=legendFor(m.id),total=items.reduce((a,i)=>a+i.n,0),lx=L.x+L.w+6,rowH=5,maxRows=Math.floor((L.H-L.y-16-8)/rowH);
-    const drawLeg=(its,x0,y0,w0,first)=>{
-      pdf.text(first?'LEYENDA':'LEYENDA (continuacion)',x0,y0,9,{bold:true,color:[20,20,20]}); let y=y0+4;
-      for(const it of its){
-        pdf.rect(x0,y-3.3,15,4.2,{fill:hex2rgb(it.y.bg),stroke:[120,120,120],lw:.15});
-        let fs=6.5; const code=pdfSafe(it.y.code); while(textW(code,fs,true)>13.5&&fs>3.5) fs-=.4;
-        pdf.text(code,x0+7.5,y-.4,fs,{bold:true,align:'center',color:hex2rgb(it.y.fg)});
-        let nm=pdfSafe(it.y.name); const full=nm,mw=w0-15-2-9; while(textW(nm,6.5)>mw&&nm.length>3) nm=nm.slice(0,-2); if(nm!==full) nm=nm.trimEnd()+'...';
-        pdf.text(nm,x0+17,y-.4,6.5,{color:[30,30,30]}); pdf.text(String(it.n),x0+w0,y-.4,6.5,{bold:true,align:'right',color:[30,30,30]}); y+=rowH;
-      }
-      return y;
-    };
-    const rest=items.slice(),first=rest.splice(0,maxRows),yEnd=drawLeg(first,lx,L.y+3,L.lw,true);
-    if(!rest.length){pdf.line(lx,yEnd-2,lx+L.lw,yEnd-2,.3,[20,20,20]);pdf.text('Total',lx+17,yEnd+2,8,{bold:true});pdf.text(String(total),lx+L.lw,yEnd+2,8,{bold:true,align:'right'})}
-    pdf.text(`${total} papeleras en esta planta - ${m.cols} x ${m.rows} celdas`,10,L.H-8,7.5,{color:[110,110,110]});
-    while(rest.length){pdf.addPage(L.W,L.H);const chunk=rest.splice(0,Math.floor((L.H-30)/rowH)),w0=L.W>L.H?120:110,ye=drawLeg(chunk,10,16,w0,false);
-      if(!rest.length){pdf.text('Total',27,ye+2,8,{bold:true});pdf.text(String(total),10+w0,ye+2,8,{bold:true,align:'right'})}}
+    const fit=(W,H)=>Math.min((W-20)/cv.width,(H-34)/cv.height);
+    const land=fit(297,210)>=fit(210,297), W=land?297:210, H=land?210:297, f=fit(W,H);
+    const items=legendFor(m.id), total=items.reduce((a,i)=>a+i.n,0);
+    const head=(t)=>{pdf.text(t,10,14,15,{bold:true,color:[20,20,20]});pdf.text('Fecha: '+todayStr(),W-10,14,9,{align:'right',color:[90,90,90]});pdf.line(10,18,W-10,18,.5,[20,20,20])};
+    const foot=()=>pdf.text(`${total} papeleras en esta planta - ${m.cols} x ${m.rows} celdas`,10,H-8,7.5,{color:[110,110,110]});
+    pdf.addPage(W,H); head('Mapa de residuos - '+m.name);
+    const iw=cv.width*f,ih=cv.height*f,x=(W-iw)/2,y=24+((H-34)-ih)/2;
+    pdf.image(jpegBytes(cv),cv.width,cv.height,x,y,iw,ih); pdf.rect(x,y,iw,ih,{stroke:[170,170,170],lw:.2}); foot();
+    const cols=land?3:2, gap=8, cw=(W-20-gap*(cols-1))/cols, rowH=6, rows=Math.floor((H-24-16)/rowH), per=rows*cols, rest=items.slice();
+    let first=true;
+    do{
+      pdf.addPage(W,H); head('Leyenda - '+m.name); foot();
+      const chunk=rest.splice(0,per);
+      chunk.forEach((it,i)=>{
+        const col=Math.floor(i/rows), x0=10+col*(cw+gap), yy=28+(i%rows)*rowH;
+        pdf.rect(x0,yy-3.8,16,4.8,{fill:hex2rgb(it.y.bg),stroke:[0,0,0],lw:.2});
+        let fs=7.5; const code=pdfSafe(it.y.code); while(textW(code,fs,true)>14.5&&fs>3.5) fs-=.4;
+        pdf.text(code,x0+8,y_(yy),fs,{bold:true,align:'center',color:hex2rgb(it.y.fg)});
+        let nm=pdfSafe(it.y.name); const full=nm,mw=cw-16-2-9; while(textW(nm,8)>mw&&nm.length>3) nm=nm.slice(0,-2); if(nm!==full) nm=nm.trimEnd()+'...';
+        pdf.text(nm,x0+18,y_(yy),8,{color:[30,30,30]}); pdf.text(String(it.n),x0+cw,y_(yy),8,{bold:true,align:'right',color:[30,30,30]});
+      });
+      if(!rest.length){ if(!items.length) pdf.text('Sin papeleras en esta planta.',10,30,9,{color:[90,90,90]});
+        const used=Math.min(rows,Math.max(chunk.length,1)); const ty=28+used*rowH+3; pdf.line(10,ty-4,W-10,ty-4,.3,[20,20,20]); pdf.text('Total',10,ty,9,{bold:true}); pdf.text(String(total),10+cw,ty,9,{bold:true,align:'right'}) }
+      first=false;
+    }while(rest.length);
   }
   return pdf.output();
 }
+const y_=yy=>yy-.5;
 /* --- XLSX mínimo (sin librerías): zip sin comprimir + XML --- */
 const _crcT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
 const crc32=u=>{let c=0xFFFFFFFF;for(let i=0;i<u.length;i++)c=_crcT[(c^u[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0};
@@ -1343,18 +1355,21 @@ async function openPrint(){
   const cl=el('button','btn','Cerrar ✕'); cl.type='button'; cl.onclick=closePrint;
   const hint=el('span','hint','Si no se abre el cuadro de impresión, descarga el PDF y imprímelo desde ahí.');
   tools.append(pr,dl,os,gl,cl,hint); pv.append(tools);
-  const items=legendFor(m.id), total=items.reduce((a,i)=>a+i.n,0);
-  const sheet=el('div','sheet '+(land?'land':'port'));
-  const sh=el('div','shead'); sh.append(el('h2',null,'Mapa de residuos · '+m.name),el('span',null,'Fecha: '+todayStr())); sheet.append(sh);
-  const pm=el('div','pmap'); const img=el('img'); img.alt='Mapa de '+m.name; img.src=cv.toDataURL('image/png'); pm.append(img); sheet.append(pm);
-  const pl=el('div','pleg'); pl.append(el('h3',null,'Leyenda')); const ul=el('ul');
+  const items=legendFor(m.id), total=items.reduce((a,i)=>a+i.n,0), cls=land?'land':'port';
+  const mkHead=t=>{const sh=el('div','shead'); sh.append(el('h2',null,t),el('span',null,'Fecha: '+todayStr())); return sh};
+  const mkFoot=()=>{const ft=el('div','sfoot'); ft.append(el('span',null,`${total} papelera${total===1?'':'s'} en esta planta`),el('span',null,`${m.cols} × ${m.rows} celdas`)); return ft};
+  /* Hoja 1: la planta con sus papeleras */
+  const sheet=el('div','sheet pagemap '+cls); sheet.append(mkHead('Mapa de residuos · '+m.name));
+  const pm=el('div','pmap'); const img=el('img'); img.alt='Mapa de '+m.name; img.src=cv.toDataURL('image/png'); pm.append(img); sheet.append(pm); sheet.append(mkFoot());
+  /* Hoja 2: la leyenda */
+  const sheet2=el('div','sheet pageleg '+cls); sheet2.append(mkHead('Leyenda · '+m.name));
+  const pl=el('div','pleg'); const ul=el('ul');
   for(const it of items){const li=el('li');const chip=el('span','chip',it.y.code);chip.style.background=it.y.bg;chip.style.color=it.y.fg;li.append(chip,el('span',null,it.y.name),el('b',null,String(it.n)));ul.append(li)}
-  if(!items.length) ul.append(el('li',null,'Sin papeleras en esta planta.')); pl.append(ul); sheet.append(pl);
-  const ft=el('div','sfoot'); ft.append(el('span',null,`${total} papelera${total===1?'':'s'} en esta planta`),el('span',null,`${m.cols} × ${m.rows} celdas`)); sheet.append(ft);
-  pv.append(sheet);
+  if(!items.length) ul.append(el('li',null,'Sin papeleras en esta planta.')); ul.style.columns=String(Math.max(1,Math.min(land?3:2,Math.ceil(items.length/12)))); pl.append(ul);
+  const tot=el('div','ptotal'); tot.append(el('span',null,'Total'),el('b',null,String(total))); pl.append(tot); sheet2.append(pl); sheet2.append(mkFoot());
+  pv.append(sheet,sheet2);
   let st=$('pagestyle'); if(!st){st=document.createElement('style');st.id='pagestyle';document.head.append(st)}
   st.textContent=`@page{size:A4 ${land?'landscape':'portrait'};margin:10mm}`;
-  if(land) pm.style.maxHeight='none';
 }
 
 /* Generador de códigos QR (modo bytes, corrección M, versiones 1-10). */
@@ -1435,7 +1450,7 @@ function renderQr(){
   const x=el('button','btn','Cerrar ✕'); x.type='button'; x.onclick=closeQr; head.append(hl,x); modal.append(head);
   if(!S.canWrite) modal.append(el('div','banner','Solo lectura: puedes ver e imprimir los QR, pero no cambiar la tabla.'));
   const tools=el('div','lvtools');
-  const q=el('input','field'); q.id='qrq'; q.type='search'; q.placeholder='Buscar en la tabla'; q.value=qrF.q;
+  const q=el('input','field'); q.id='qrq'; q.type='search'; q.placeholder='Buscar en la tabla…'; q.value=qrF.q;
   q.oninput=()=>{qrF.q=q.value;const p=q.selectionStart;renderQr();const n=$('qrq');n.focus();try{n.setSelectionRange(p,p)}catch(_){}};
   const mk=(key,label)=>{const s=el('select','field');s.setAttribute('aria-label',label);const o0=el('option',null,label+': todas');o0.value='';s.append(o0);
     for(const v of [...new Set(all.map(r=>r[key]).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es',{numeric:true}))){const o=el('option',null,v);o.value=v;if(v===qrF[key])o.selected=true;s.append(o)}
@@ -1578,7 +1593,7 @@ function openPicker(){
 }
 function renderPicker(q){
   const p=$('picker'); p.replaceChildren();
-  const head=el('div','pkhead'); const inp=el('input','field'); inp.id='pq'; inp.type='search'; inp.placeholder='Buscar tipo por abreviación o nombre'; inp.value=q; inp.setAttribute('aria-label','Buscar tipo');
+  const head=el('div','pkhead'); const inp=el('input','field'); inp.id='pq'; inp.type='search'; inp.placeholder='Buscar tipo por abreviación o nombre…'; inp.value=q; inp.setAttribute('aria-label','Buscar tipo');
   head.append(inp); p.append(head);
   const list=el('div','pklist'); list.setAttribute('role','listbox'); p.append(list);
   const qq=q.trim().toLowerCase();
@@ -1613,7 +1628,7 @@ function renderLegendView(){
   meta.append(mk('Fecha de actualización',lastUpdate()),mk((useMap&&m?'Total en '+m.name:'Total residuos')+(lvSec?' · '+lvSec:''),String(total)),mk('Tipos',String(S.types.size)));
   hl.append(meta); const x=el('button','btn','Cerrar ✕'); x.type='button'; x.onclick=closeLegend; head.append(hl,x); modal.append(head);
   const tools=el('div','lvtools');
-  const q=el('input','field'); q.id='lvq'; q.type='search'; q.placeholder='Buscar abreviación, nombre, grupo o zona'; q.value=lvQuery; q.oninput=()=>{lvQuery=q.value;const p=q.selectionStart;renderLegendView();const n=$('lvq');n.focus();try{n.setSelectionRange(p,p)}catch(_){}};
+  const q=el('input','field'); q.id='lvq'; q.type='search'; q.placeholder='Buscar abreviación, nombre, grupo o zona…'; q.value=lvQuery; q.oninput=()=>{lvQuery=q.value;const p=q.selectionStart;renderLegendView();const n=$('lvq');n.focus();try{n.setSelectionRange(p,p)}catch(_){}};
   const sc=el('select','field'); sc.setAttribute('aria-label','Qué cantidades mostrar');
   for(const [v,t] of [['total','Cantidades: todas las plantas'],['map','Cantidades: solo '+(m?m.name:'esta planta')]]){const o=el('option',null,t);o.value=v;if(v===lvScope)o.selected=true;sc.append(o)}
   sc.onchange=()=>{lvScope=sc.value;renderLegendView()};
@@ -1792,7 +1807,7 @@ function renderSecCard(c,z){
   const x=el('button','btn iconbtn','✕'); x.type='button'; x.setAttribute('aria-label','Cerrar'); x.onclick=()=>{S.selSec=null;renderSecs();renderSel()};
   head.append(t,x); c.append(head);
   const f1=el('div'); const l1=el('label','lbl','Nombre de la sección'); l1.htmlFor='secname';
-  const inp=el('input','field'); inp.id='secname'; inp.maxLength=40; inp.value=z.name; inp.disabled=!w; inp.placeholder='Ej.: PAQ_MDL'; inp.setAttribute('list','secnamedl'); inp.autocomplete='off';
+  const inp=el('input','field'); inp.id='secname'; inp.maxLength=40; inp.value=z.name; inp.disabled=!w; inp.placeholder='Ej.: PAQ_MDL…'; inp.setAttribute('list','secnamedl'); inp.autocomplete='off';
   const dl=document.createElement('datalist'); dl.id='secnamedl'; for(const v of secSuggest()){const o=document.createElement('option');o.value=v;dl.append(o)}
   inp.onchange=()=>{const v=inp.value.trim().replace(/\s+/g,' ');const patch={name:v};if(v&&!z.name&&z.color==='#6b7a8f')patch.color=secColor(v);updateSec(z,patch)};
   inp.onkeydown=ev=>{if(ev.key==='Enter'){ev.preventDefault();inp.blur()}};
