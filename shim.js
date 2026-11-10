@@ -20,8 +20,7 @@ function fatal(title,text){var c=card();c.append(h('strong','font-size:18px',tit
 function askCode(msg,prefill){
   return new Promise(function(res){
     var c=card(); var f=h('form','display:flex;flex-direction:column;gap:12px'); c.append(f);
-    var mk=h('div','display:flex;gap:2px');mk.translate=false;var chip=function(t,bg,fg){var x=h('span','font:700 10px "IBM Plex Mono",ui-monospace,monospace;padding:3px 7px;border:1px solid #000;background:'+bg+';color:'+fg+';letter-spacing:-.02em',t);x.setAttribute('aria-hidden','true');return x};mk.append(chip('PR','#a5a5a5','#000'),chip('PC','#3b6fd4','#fff'),chip('PAL','#f8d7c9','#000'),chip('PPL','#f5a623','#000'));
-    f.append(mk,h('strong','font-size:20px','Mapas de residuos'),h('div','font-size:14px;color:'+C.mut,'Introduce el código de acceso que te han dado.'));
+    f.append(h('strong','font-size:20px','Mapas de residuos'),h('div','font-size:14px;color:'+C.mut,'Introduce el código de acceso que te han dado.'));
     var i=h('input','font:inherit;padding:10px 12px;border:1px solid '+C.line+';border-radius:8px;background:'+C.card+';color:'+C.ink+';min-height:44px'); i.type='password'; i.autocomplete='current-password'; i.placeholder='Código de acceso'; i.setAttribute('aria-label','Código de acceso'); i.value=prefill||'';
     var l=h('label','display:flex;gap:8px;align-items:center;font-size:13px;color:'+C.mut); var k=h('input'); k.type='checkbox'; k.checked=true; k.style.accentColor=C.acc; l.append(k,'Recordar en este dispositivo');
     var e=h('div','font-size:13px;color:'+C.err+';min-height:18px',msg||''); e.setAttribute('role','alert');

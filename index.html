@@ -70,7 +70,7 @@ h1{font-family:var(--f-display);font-size:18px;line-height:1.1;margin:0;letter-s
 .hint{font-size:12px;color:var(--muted)}
 
 /* mapa */
-.board{position:relative;flex:1 1 auto;min-height:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--map)}
+.board{position:relative;flex:1 1 0;min-width:0;min-height:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--map)}
 .viewport{position:absolute;inset:0;overflow:auto;background:var(--map)}
 #sizer{position:relative}
 #stage{position:absolute;left:0;top:0;transform-origin:0 0;background:var(--map);color:var(--map-ink);user-select:none;-webkit-user-select:none}
@@ -83,15 +83,13 @@ h1{font-family:var(--f-display);font-size:18px;line-height:1.1;margin:0;letter-s
 #stage #ghost{position:absolute;border:2px solid #0b6bff;background:rgba(11,107,255,.18);border-radius:4px;pointer-events:none;display:none;z-index:7}
 #stage.brush{cursor:crosshair}
 #stage.brush .bin{cursor:pointer}
-.maptools.right{left:auto;right:10px}
-.tbshow{position:absolute;top:10px;left:10px;z-index:12;box-shadow:var(--shadow)}
-.tbshow.right{left:auto;right:10px}
-.picker.right{left:auto;right:10px}
-.maptools{position:absolute;top:10px;left:10px;z-index:12;display:flex;flex-wrap:wrap;align-items:center;gap:6px;max-width:calc(100% - 20px);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:4px;box-shadow:var(--shadow)}
+.maptools{position:static;flex:0 0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:4px}
+.workarea{flex:1 1 auto;min-height:0;display:flex;gap:8px}
+#searchpop{position:static;flex:0 0 340px;width:340px;max-height:none;z-index:auto}
 .zoomv{font-family:var(--f-mono);font-size:12px;min-width:42px;text-align:center;color:var(--muted)}
 .brushchip{display:inline-flex;align-items:center;gap:6px;padding:2px 4px 2px 8px;border-left:1px solid var(--line);min-width:0}
 .brushchip .bn{font-size:12px;font-weight:600;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.empty{position:absolute;left:50%;top:70px;transform:translateX(-50%);background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:12px 16px;width:min(380px,calc(100% - 32px));text-align:center;z-index:9;font-size:13px;box-shadow:var(--shadow);pointer-events:none}
+.empty{position:absolute;left:50%;top:24px;transform:translateX(-50%);background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:12px 16px;width:min(380px,calc(100% - 32px));text-align:center;z-index:9;font-size:13px;box-shadow:var(--shadow);pointer-events:none}
 
 /* tarjeta flotante de la papelera seleccionada */
 .floatsel{position:absolute;left:10px;bottom:10px;width:min(330px,calc(100% - 20px));z-index:15;box-shadow:var(--shadow)}
@@ -181,7 +179,7 @@ table.lv tfoot td{font-weight:700;border-top:2px solid var(--ink);position:stick
 .recent{display:inline-flex;gap:4px;flex-wrap:wrap}
 .recent .rc{cursor:pointer;min-width:0;padding:3px 8px}
 .recent .rc:hover{outline:2px solid var(--accent)}
-.picker{position:absolute;left:10px;z-index:25;width:min(380px,calc(100% - 20px));max-height:calc(100% - 90px);background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden}
+.picker{position:absolute;left:10px;top:10px;z-index:25;width:min(380px,calc(100% - 20px));max-height:calc(100% - 20px);background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden}
 .picker .pkhead{padding:8px;border-bottom:1px solid var(--line)}
 .picker .pklist{overflow:auto;padding:4px;display:flex;flex-direction:column;gap:1px}
 .picker .lg{grid-template-columns:62px minmax(0,1fr)}
@@ -275,10 +273,9 @@ button,.chip{-webkit-tap-highlight-color:transparent}
   .plantsel{flex:1 1 100%;max-width:none;order:3}
   .actions{order:4;flex:1 1 100%;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
   .actions .btn{flex:0 0 auto;white-space:nowrap}
-  .tbshow{top:6px;left:6px}
-  .tbshow.right,.maptools.right{left:auto;right:6px}
-  .picker.right{left:auto;right:6px}
-  .maptools{top:6px;left:6px;max-width:calc(100% - 12px);flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .maptools{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .workarea{flex-direction:column}
+  #searchpop{flex:0 1 auto;width:100%;max-height:46%}
   .maptools>*{flex:0 0 auto;white-space:nowrap}
   .maptools .brushchip{border-left:0;padding-left:0}
   .brushchip,.recent,.findchip{flex-wrap:nowrap}
@@ -328,13 +325,7 @@ button,.chip{-webkit-tap-highlight-color:transparent}
   </header>
   <div class="banner" id="ro" hidden>Tienes acceso de solo lectura. Para colocar o mover papeleras necesitas el código de edición.</div>
 
-  <section class="board" id="board" aria-label="Mapa">
-    <div class="viewport" id="vp"><div id="sizer"><div id="stage" hidden></div></div></div>
-
-    <button class="btn tbshow" id="tbshow" type="button" hidden title="Mostrar la barra de herramientas del mapa">☰ Herramientas</button>
-    <div class="maptools">
-      <button class="btn iconbtn" id="tbside" type="button" title="Mover la barra a la derecha" aria-label="Mover la barra a la derecha">⇄</button>
-      <button class="btn iconbtn" id="tbhide" type="button" title="Ocultar la barra para ver todo el mapa" aria-label="Ocultar la barra">▲</button>
+  <div class="maptools" role="toolbar" aria-label="Herramientas del mapa">
       <button class="btn" id="zout" type="button" aria-label="Alejar">−</button>
       <span class="zoomv" id="zv">100%</span>
       <button class="btn" id="zin" type="button" aria-label="Acercar">+</button>
@@ -350,12 +341,15 @@ button,.chip{-webkit-tap-highlight-color:transparent}
         <span class="recent" id="recent" aria-label="Tipos usados hace poco"></span>
         <button class="btn iconbtn" id="bx" type="button" hidden aria-label="Soltar pincel" title="Soltar pincel (Esc)">✕</button>
       </span>
-    </div>
+  </div>
+  <div class="workarea">
+    <div class="picker" id="searchpop" role="dialog" aria-label="Buscar papelera" hidden></div>
+  <section class="board" id="board" aria-label="Mapa">
+    <div class="viewport" id="vp"><div id="sizer"><div id="stage" hidden></div></div></div>
 
     <div class="card floatsel" id="selcard" aria-live="polite" hidden></div>
     <div class="tip" id="tip" role="tooltip"></div>
     <div class="picker" id="picker" role="dialog" aria-label="Elegir tipo de papelera" hidden></div>
-    <div class="picker" id="searchpop" role="dialog" aria-label="Buscar papelera" hidden></div>
 
     <aside class="drawer" id="drawer" aria-label="Panel de planta y tipos" inert>
       <div class="drawhead"><strong>Panel</strong><button class="btn" id="closedrawer" type="button">Cerrar ✕</button></div>
@@ -388,6 +382,7 @@ button,.chip{-webkit-tap-highlight-color:transparent}
       </div>
     </aside>
   </section>
+  </div>
 </div>
 <div id="mapform" class="modalback"></div>
 <div id="legendview" class="modalback"></div>
@@ -997,8 +992,8 @@ function jumpTo(b){
 }
 function closeSearch(){S.searchOpen=false;$('searchpop').hidden=true;$('searchbtn').setAttribute('aria-expanded','false')}
 function openSearch(){
-  closePicker(); setMenu(false); S.searchOpen=true; const p=$('searchpop'), tb=document.querySelector('.maptools');
-  p.style.top=(tb.offsetTop+tb.offsetHeight+6)+'px'; p.hidden=false; $('searchbtn').setAttribute('aria-expanded','true');
+  closePicker(); setMenu(false); S.searchOpen=true; const p=$('searchpop');
+  p.hidden=false; $('searchbtn').setAttribute('aria-expanded','true');
   renderSearch(S.find); $('sq').focus(); $('sq').select();
 }
 function renderSearch(q){
@@ -1587,8 +1582,8 @@ function setBrush(id){
 function closePicker(){S.picker=false;$('picker').hidden=true;$('pickbtn').setAttribute('aria-expanded','false')}
 function openPicker(){
   if(!S.canWrite){toast('Tu acceso es de solo lectura.');return}
-  closeSearch(); S.picker=true; const p=$('picker'), tb=document.querySelector('.maptools');
-  p.style.top=(tb.offsetTop+tb.offsetHeight+6)+'px'; p.hidden=false; $('pickbtn').setAttribute('aria-expanded','true');
+  closeSearch(); S.picker=true; const p=$('picker');
+  p.hidden=false; $('pickbtn').setAttribute('aria-expanded','true');
   renderPicker(''); $('pq').focus();
 }
 function renderPicker(q){
@@ -2137,18 +2132,6 @@ async function start(){
     renderAll();
   },bad);
 }
-let TB={side:'left',hid:false}; try{const t=JSON.parse(localStorage.getItem('residuos-barra')||'{}');if(t.side==='right')TB.side='right';TB.hid=t.hid===true}catch(e){}
-function applyTB(){
-  const mt=document.querySelector('.maptools'),r=TB.side==='right';
-  mt.classList.toggle('right',r); mt.hidden=TB.hid; $('tbshow').hidden=!TB.hid; $('tbshow').classList.toggle('right',r);
-  $('picker').classList.toggle('right',r); $('searchpop').classList.toggle('right',r);
-  const sb=$('tbside'),tx=r?'Mover la barra a la izquierda':'Mover la barra a la derecha'; sb.title=tx; sb.setAttribute('aria-label',tx);
-  try{localStorage.setItem('residuos-barra',JSON.stringify(TB))}catch(e){}
-}
-$('tbside').onclick=()=>{TB.side=TB.side==='right'?'left':'right';applyTB()};
-$('tbhide').onclick=()=>{TB.hid=true;closePicker();closeSearch();applyTB()};
-$('tbshow').onclick=()=>{TB.hid=false;applyTB()};
-applyTB();
 if(window.__logout){$('logoutbtn').hidden=false;$('logoutbtn').onclick=()=>{setWho('');window.__logout()}}
 window.addEventListener('imgloaded',()=>{const m=curMap();if(m&&m.img){buildStage();renderAll()}});
 start();
