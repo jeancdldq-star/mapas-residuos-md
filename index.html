@@ -79,6 +79,17 @@ h1{font-family:var(--f-display);font-size:18px;line-height:1.1;margin:0;letter-s
 #stage .bin{position:absolute;display:flex;align-items:center;justify-content:center;border-radius:0;border:1px solid #000;font-family:var(--f-mono);font-weight:600;letter-spacing:-.04em;white-space:nowrap;overflow:hidden;cursor:grab}
 #stage .bin.dim{opacity:.16}
 #stage .bin.sel{outline:3px solid #0b6bff;outline-offset:1px;z-index:5}
+#stage #cellmark{position:absolute;border:2px solid var(--accent);background:rgba(11,107,90,.14);pointer-events:none;display:none;z-index:6}
+#stage #cellmark span{position:absolute;left:-2px;bottom:100%;transform-origin:0 100%;background:var(--accent);color:var(--accent-ink);font:600 11px/1 var(--f-mono);padding:3px 6px;white-space:nowrap}
+.rul{position:absolute;z-index:8;background:var(--panel);color:var(--muted);font:500 10px/1 var(--f-mono);overflow:hidden;pointer-events:none;user-select:none}
+#rulx{top:0;left:30px;right:0;height:18px;border-bottom:1px solid var(--line)}
+#ruly{top:18px;left:0;bottom:0;width:30px;border-right:1px solid var(--line)}
+#rulc{top:0;left:0;width:30px;height:18px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.rul span{position:absolute;display:flex;align-items:center;justify-content:center;border-color:var(--line);border-style:solid;border-width:0}
+#rulx span{top:0;height:100%;border-left-width:1px}
+#ruly span{left:0;width:100%;border-top-width:1px}
+.rul span.on{background:var(--accent);color:var(--accent-ink);font-weight:700}
+.board.rulers .viewport{inset:18px 0 0 30px}
 #stage #hover{position:absolute;border:2px dashed #0b6bff;border-radius:4px;pointer-events:none;display:none;z-index:6}
 #stage #ghost{position:absolute;border:2px solid #0b6bff;background:rgba(11,107,255,.18);border-radius:4px;pointer-events:none;display:none;z-index:7}
 #stage.brush{cursor:crosshair}
@@ -192,7 +203,7 @@ table.lv tfoot td{font-weight:700;border-top:2px solid var(--ink);position:stick
 .hsec{padding:6px 16px;background:var(--bg);font-size:12px;font-weight:600;color:var(--muted);position:sticky;top:0;z-index:1;text-transform:capitalize}
 .hrow{display:flex;gap:10px;padding:7px 16px;border-bottom:1px solid var(--line);align-items:baseline;font-size:13px}
 .hrow .ht{font-family:var(--f-mono);font-size:12px;color:var(--muted);flex:0 0 42px}
-.hrow .hd{width:8px;height:8px;border-radius:50%;flex:0 0 8px;align-self:center;background:var(--muted)}
+.hrow .hd{position:static;width:8px;height:8px;border-radius:50%;flex:0 0 8px;align-self:center;background:var(--muted)}
 .hrow .hd.bin{background:#2e9e5b}.hrow .hd.zone{background:#d98a00}.hrow .hd.map{background:#0b6bff}.hrow .hd.type{background:#a24bd1}
 .hrow .hx{flex:1;min-width:0;overflow-wrap:anywhere}
 .hrow .hw{font-size:12px;font-weight:600;white-space:nowrap}
@@ -201,6 +212,13 @@ table.lv tfoot td{font-weight:700;border-top:2px solid var(--ink);position:stick
 .qrtab th{position:sticky;top:0;background:var(--panel);text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted);z-index:1}
 .qrtab td{padding:5px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
 .qrtab .qrt{font-family:var(--f-mono);font-size:11px;color:var(--muted);overflow-wrap:anywhere;min-width:140px;max-width:210px}
+.qrtab .qrb{white-space:nowrap}
+.btn.asg{background:var(--accent-soft);border-color:var(--accent);font-weight:600}
+.banner.qrasg{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.selqr{border-top:1px solid var(--line);padding-top:8px;display:flex;flex-direction:column;gap:6px}
+.selqrt{display:flex;flex-direction:column;min-width:0}
+.selqrt b{font-family:var(--f-mono);font-size:11px;overflow-wrap:anywhere;font-weight:500}
+.selqrt .lbl{font-size:12px;color:var(--muted)}
 .qrtab .qra{white-space:nowrap;text-align:right;position:sticky;right:0;background:var(--panel);box-shadow:-6px 0 6px -6px rgba(0,0,0,.2)}
 .btn.sm{padding:3px 8px;min-height:28px;font-size:12px}
 .qrsheet{display:grid;gap:3mm;padding:4mm;background:#fff;color:#000}
@@ -347,6 +365,7 @@ button,.chip{-webkit-tap-highlight-color:transparent}
   <section class="board" id="board" aria-label="Mapa">
     <div class="viewport" id="vp"><div id="sizer"><div id="stage" hidden></div></div></div>
 
+    <div class="rul" id="rulx" aria-hidden="true" hidden></div><div class="rul" id="ruly" aria-hidden="true" hidden></div><div class="rul" id="rulc" aria-hidden="true" hidden></div>
     <div class="card floatsel" id="selcard" aria-live="polite" hidden></div>
     <div class="tip" id="tip" role="tooltip"></div>
     <div class="picker" id="picker" role="dialog" aria-label="Elegir tipo de papelera" hidden></div>
@@ -460,9 +479,10 @@ function buildStage(){
   const zlay=el('div'); zlay.id='zonelayer'; zlay.style.cssText='position:absolute;inset:0;pointer-events:none'; st.append(zlay);
   const bl=el('div'); bl.id='binlayer'; st.append(bl);
   const h=el('div'); h.id='hover'; st.append(h);
+  const cm=el('div'); cm.id='cellmark'; cm.append(el('span')); st.append(cm);
   const gh=el('div'); gh.id='ghost'; st.append(gh);
   const zg=el('div'); zg.id='zghost'; st.append(zg);
-  S.sig=sigOf(m); applyScale();
+  S.sig=sigOf(m); applyScale(); renderCell();
 }
 function applyScale(){
   const m=curMap(), vp=$('vp'); if(!m) return; CW=cwOf(m);
@@ -471,7 +491,34 @@ function applyScale(){
   $('stage').style.transform=`scale(${S.scale})`;
   $('sizer').style.width=W*S.scale+'px'; $('sizer').style.height=H*S.scale+'px';
   $('zv').textContent=Math.round(S.scale*100)+'%';
+  const cs=document.querySelector('#cellmark span'); if(cs) cs.style.transform=`scale(${1/S.scale})`;
+  renderRulers();
 }
+/* celda vacía marcada con un clic */
+function renderCell(){
+  const cm=$('cellmark'); if(!cm) return; const m=curMap(), k=S.cell;
+  if(!k||!m||k.map!==m.id||k.r>m.rows||k.c>m.cols){cm.style.display='none';renderRulers();return}
+  const q=rect(k.r,k.c,k.r,k.c); cm.style.left=q.x+'px'; cm.style.top=q.y+'px'; cm.style.width=q.w+'px'; cm.style.height=q.h+'px'; cm.style.display='block';
+  cm.firstChild.textContent='Celda '+cellRef(k.r,k.c); cm.firstChild.style.transform=`scale(${1/S.scale})`; renderRulers();
+}
+function markCell(cell){S.cell=cell?{map:S.map,r:cell.r,c:cell.c}:null;renderCell()}
+/* letras de columna y números de fila, como en el Excel (solo con la cuadrícula activada) */
+let rulRaf=0;
+function renderRulers(){
+  const m=curMap(), on=!!(S.grid&&m), bd=$('board'); if(!bd) return;
+  bd.classList.toggle('rulers',on); for(const id of ['rulx','ruly','rulc']) $(id).hidden=!on;
+  if(!on) return;
+  const vp=$('vp').getBoundingClientRect(), st=$('stage').getBoundingClientRect(), cw=CW*S.scale, ch=CELL*S.scale, ox=st.left-vp.left, oy=st.top-vp.top;
+  const k=S.cell&&S.cell.map===m.id?S.cell:(S.sel&&S.bins.get(S.sel)&&S.bins.get(S.sel).map===m.id?S.bins.get(S.sel):null);
+  const fx=document.createDocumentFragment(), fy=document.createDocumentFragment();
+  const sx=Math.max(1,Math.ceil(24/cw)), sy=Math.max(1,Math.ceil(13/ch));
+  const c0=Math.max(1,Math.floor(-ox/cw)+1), c1=Math.min(m.cols,Math.ceil((vp.width-ox)/cw));
+  for(let c=c0;c<=c1;c++){ if(sx>1&&(c-1)%sx!==0&&!(k&&k.c===c)) continue; const s=document.createElement('span'); s.textContent=colName(c); s.style.left=(ox+(c-1)*cw)+'px'; s.style.width=(cw*(k&&k.c===c?1:sx))+'px'; if(k&&k.c===c){s.className='on';s.style.zIndex='1';s.style.minWidth='22px'} fx.append(s) }
+  const r0=Math.max(1,Math.floor(-oy/ch)+1), r1=Math.min(m.rows,Math.ceil((vp.height-oy)/ch));
+  for(let r=r0;r<=r1;r++){ if(sy>1&&(r-1)%sy!==0&&!(k&&k.r===r)) continue; const s=document.createElement('span'); s.textContent=String(r); s.style.top=(oy+(r-1)*ch)+'px'; s.style.height=(ch*(k&&k.r===r?1:sy))+'px'; if(k&&k.r===r){s.className='on';s.style.zIndex='1';s.style.minHeight='12px'} fy.append(s) }
+  $('rulx').replaceChildren(fx); $('ruly').replaceChildren(fy);
+}
+function queueRulers(){if(!S.grid||rulRaf)return;rulRaf=requestAnimationFrame(()=>{rulRaf=0;renderRulers()})}
 /* Tamaño de las etiquetas: cada papelera ocupa exactamente una celda; si el nombre es largo, se reduce la letra. */
 function labelLayout(mapId){
   const out=new Map(),CW=cwOf(S.maps.get(mapId));
@@ -512,6 +559,7 @@ function renderEmpty(){
 
 /* ---------- papelera seleccionada (tarjeta flotante) ---------- */
 function renderSel(){
+  if((S.sel||S.selZone||S.selSec)&&S.cell){S.cell=null} renderCell();
   const c=$('selcard'); c.replaceChildren();
   const ssel=S.selSec?S.secs.get(S.selSec):null;
   if(ssel){c.hidden=false;renderSecCard(c,ssel);return}
@@ -540,6 +588,18 @@ function renderSel(){
   const del=el('button','btn danger','Borrar'); del.type='button'; del.disabled=!w; del.onclick=()=>removeBin(b);
   row.append(ar,del);
   c.append(f1,f2,row);
+  /* QR asignado a esta papelera */
+  const qb=el('div','selqr'); const qrow=b.qr?S.qr.get(b.qr):null;
+  const qbtn=(t,fn,cls)=>{const y=el('button','btn'+(cls?' '+cls:''),t);y.type='button';y.onclick=fn;return y};
+  if(qrow){
+    const tx=el('div','selqrt'); tx.append(el('span','lbl','QR asignado'),el('b',null,qrow.qr)); qb.append(tx);
+    const r2=el('div','row2'); r2.append(qbtn('▦ Ver QR',()=>{S.qrOpen=true;qrAssign=null;qrSub={mode:'view',row:qrow};renderQr()}));
+    if(w) r2.append(qbtn('Cambiar',()=>openQrAssign(b)),qbtn('Quitar',()=>unassignQr(b)));
+    qb.append(r2);
+  }else{
+    const a=qbtn('▦ Asignar QR',()=>openQrAssign(b)); a.disabled=!w; if(!w)a.title='Tu acceso es de solo lectura'; qb.append(a);
+  }
+  c.append(qb);
 }
 
 /* ---------- leyenda de tipos ---------- */
@@ -625,12 +685,12 @@ async function moveTo(b,r2,c2){
   const m=curMap(); if(!m||r2<1||c2<1||r2>m.rows||c2>m.cols) return;
   const nid=bid(b.map,r2,c2); if(nid===b.id||S.bins.has(nid)) return;
   if(busy) return; busy=true;
-  const ok=await write(async()=>{await S.db.doc('bins/'+nid).set({map:b.map,r:r2,c:c2,type:b.type,note:b.note||'',at:Date.now()});await S.db.doc('bins/'+b.id).delete()});
+  const ok=await write(async()=>{await S.db.doc('bins/'+nid).set({map:b.map,r:r2,c:c2,type:b.type,note:b.note||'',qr:b.qr||'',at:Date.now()});await S.db.doc('bins/'+b.id).delete()});
   busy=false; if(ok){logEv(`Movida ${T(b.type).code} de ${cellRef(b.r,b.c)} a ${cellRef(r2,c2)}`,b.map,'bin');S.sel=nid;renderAll()}
 }
 function moveBy(b,dr,dc){moveTo(b,b.r+dr,b.c+dc)}
 async function removeBin(b){
-  const copy={map:b.map,r:b.r,c:b.c,type:b.type,note:b.note||'',at:Date.now()};
+  const copy={map:b.map,r:b.r,c:b.c,type:b.type,note:b.note||'',qr:b.qr||'',at:Date.now()};
   const ok=await write(()=>S.db.doc('bins/'+b.id).delete());
   if(ok){logEv(`Borrada ${typeDesc(S.types.get(b.type))} de ${cellRef(b.r,b.c)}`,b.map,'bin');S.sel=null;toast('Papelera borrada.','Deshacer',async()=>{if(await write(()=>S.db.doc('bins/'+b.id).set(copy))) logEv(`Restaurada ${T(b.type).code} en ${cellRef(b.r,b.c)}`,b.map,'bin')})}
 }
@@ -821,7 +881,7 @@ async function convertWide(id){
   toast('Convirtiendo la planta…');
   const finalIds=new Set(plan.map(p=>p.nid));
   const ok=await write(async()=>{
-    for(const p of plan) await S.db.doc('bins/'+p.nid).set({map:id,r:p.b.r,c:p.c,type:p.b.type,note:p.b.note||'',at:Date.now()});
+    for(const p of plan) await S.db.doc('bins/'+p.nid).set({map:id,r:p.b.r,c:p.c,type:p.b.type,note:p.b.note||'',qr:p.b.qr||'',at:Date.now()});
     for(const p of plan) if(!finalIds.has(p.b.id)) await S.db.doc('bins/'+p.b.id).delete();
     for(const z of [...S.zones.values()].filter(z=>z.map===id)){const c1=half(z.c1),c2=Math.max(c1,half(z.c2));await S.db.doc('zones/'+z.id).update({c1,c2,at:Date.now()})}
     for(const z of [...S.secs.values()].filter(z=>z.map===id)){const c1=half(z.c1),c2=Math.max(c1,half(z.c2));await S.db.doc('secs/'+z.id).update({c1,c2,at:Date.now()})}
@@ -1186,11 +1246,11 @@ async function buildXlsx(){
   for(const y of types)leg.push([y.zone||'',y.code,y.name,y.group||'',tot[y.id]||0,...ml.map(m=>per[m.id][y.id]||0)]);
   leg.push(['','','','TOTAL',S.bins.size,...ml.map(m=>Object.values(per[m.id]).reduce((a,b)=>a+b,0))]);
   add('Leyenda',leg,[30,14,46,28,9,...ml.map(()=>14)]);
-  const rows=[['Planta','Celda','Fila','Columna','Abreviación','Nombre completo','Grupo de residuo','Zona del mapa','Sección','Nota','Fecha de colocación']];
+  const rows=[['Planta','Celda','Fila','Columna','Abreviación','Nombre completo','Grupo de residuo','Zona del mapa','Sección','Nota','Fecha de colocación','QR asignado']];
   const mi=id=>ml.findIndex(m=>m.id===id);
   for(const b of [...S.bins.values()].sort((a,b)=>(mi(a.map)-mi(b.map))||a.r-b.r||a.c-b.c)){const y=T(b.type),z=zoneAt(b),m=S.maps.get(b.map);
-    rows.push([m?m.name:b.map,cellRef(b.r,b.c),b.r,b.c,y.code,y.name,y.group||'',z?z.label:'',secOf(b)||NOSEC,b.note||'',b.at>1e12?new Date(b.at).toLocaleDateString('es-ES'):''])}
-  add('Papeleras',rows,[24,8,6,8,14,44,26,24,16,36,16]);
+    rows.push([m?m.name:b.map,cellRef(b.r,b.c),b.r,b.c,y.code,y.name,y.group||'',z?z.label:'',secOf(b)||NOSEC,b.note||'',b.at>1e12?new Date(b.at).toLocaleDateString('es-ES'):'',(b.qr&&S.qr.get(b.qr)?S.qr.get(b.qr).qr:'')])}
+  add('Papeleras',rows,[24,8,6,8,14,44,26,24,16,36,16,50]);
   {const sc=secCounts(''),names=[...new Set([...secNames(),...Object.values(sc).flatMap(o=>Object.keys(o))])].sort((a,b)=>(a===NOSEC)-(b===NOSEC)||a.localeCompare(b,'es',{numeric:true}));
    const sr=[['Abreviación','Nombre completo','Grupo de residuo','Total',...names]];
    for(const y of types){const o=sc[y.id]||{};const tot=Object.values(o).reduce((a,n)=>a+n,0);if(tot)sr.push([y.code,y.name,y.group||'',tot,...names.map(n=>o[n]||0)])}
@@ -1208,7 +1268,7 @@ async function buildXlsx(){
   add('Zonas',zr,[24,30,8,8,14,14]);
   let log=S.log;try{const sn=await S.db.collection('log').get();log=sn.docs.map(d=>d.data()).filter(e=>e&&typeof e.t==='number').sort((a,b)=>b.t-a.t)}catch(e){}
   const hr=[['Fecha','Hora','Quién','Planta','Cambio']];for(const e of log)hr.push([new Date(e.t).toLocaleDateString('es-ES'),fmtHour(e.t),e.by||'',e.map||'',e.text]);
-  {const qrr=[['Sección','Planta','Ubicación','Contenedor','Material','Texto del QR']];for(const r of qrSorted())qrr.push([r.sec,r.pl,r.ub,r.cont,r.mat,r.qr]);add('Códigos QR',qrr,[14,8,30,14,22,60])}
+  {const qrr=[['Sección','Planta','Ubicación','Contenedor','Material','Texto del QR','Papelera asignada']],qbm=qrBins();for(const r of qrSorted()){const bb=qbm.get(r.id),mp=bb?S.maps.get(bb.map):null;qrr.push([r.sec,r.pl,r.ub,r.cont,r.mat,r.qr,bb?`${T(bb.type).code} · ${cellRef(bb.r,bb.c)}${mp?' · '+mp.name:''}`:''])}add('Códigos QR',qrr,[14,8,30,14,22,60,30])}
   add('Historial',hr,[12,8,18,24,90]);
   return makeXlsx(sheets);
 }
@@ -1244,7 +1304,7 @@ function renderExport(){
 
 /* ---------- restaurar copia de seguridad ---------- */
 const RESTORE_COLS=['types','maps','zones','bins','log'];
-const PICK={maps:['name','cols','rows','cw','order','img','bgOpacity','at'],types:['code','name','group','zone','order','at','bg','fg'],bins:['map','r','c','type','note','at'],zones:['map','r1','c1','r2','c2','label','color','border','fill','fs','at'],log:['t','text','map','k']};
+const PICK={maps:['name','cols','rows','cw','order','img','bgOpacity','at'],types:['code','name','group','zone','order','at','bg','fg'],bins:['map','r','c','type','note','qr','at'],zones:['map','r1','c1','r2','c2','label','color','border','fill','fs','at'],log:['t','text','map','k']};
 const okInt=(v,a,b)=>Number.isInteger(v)&&v>=a&&v<=b;
 const hexOk=x=>/^#[0-9a-f]{6}$/i.test(x||'');
 const RV={maps:i=>typeof i.name==='string'&&okInt(i.cols,1,300)&&okInt(i.rows,1,300),
@@ -1429,12 +1489,36 @@ function qrCanvas(text,px,quiet){
 }
 const qrNewId=i=>'q_'+Date.now().toString(36)+(i==null?Math.random().toString(36).slice(2,5):String(i).padStart(4,'0'))+Math.random().toString(36).slice(2,4);
 const qrClean=v=>String(v==null?'':v).replace(/\s+/g,' ').trim();
-let qrF={q:'',sec:'',pl:''}, qrSel=new Set(), qrSub=null, qrArmed=null;
-function closeQr(){S.qrOpen=false;qrSub=null;qrSel.clear();$('qrview').replaceChildren()}
-function openQr(){S.qrOpen=true;qrSub=null;renderQr()}
+let qrF={q:'',sec:'',pl:'',as:''}, qrSel=new Set(), qrSub=null, qrArmed=null, qrAssign=null;
+function closeQr(){S.qrOpen=false;qrSub=null;qrAssign=null;qrSel.clear();$('qrview').replaceChildren()}
+function openQr(){S.qrOpen=true;qrSub=null;qrAssign=null;renderQr()}
+/* papelera que tiene asignado cada QR */
+function qrBins(){const m=new Map();for(const b of S.bins.values()) if(b.qr&&S.qr.has(b.qr)&&!m.has(b.qr)) m.set(b.qr,b);return m}
+function openQrAssign(b){
+  if(!S.canWrite){toast('Tu acceso es de solo lectura.');return}
+  S.qrOpen=true; qrSub=null; qrAssign=b.id; qrF.q=''; qrF.pl=''; qrF.as='';
+  const sc=secOf(b), secs=new Set([...S.qr.values()].map(r=>r.sec)); qrF.sec=sc&&secs.has(sc)?sc:'';
+  renderQr();
+}
+async function assignQr(binId,row){
+  const b=S.bins.get(binId); if(!b||!S.canWrite) return;
+  const other=qrBins().get(row.id);
+  const ok=await write(async()=>{
+    if(other&&other.id!==b.id) await S.db.doc('bins/'+other.id).update({qr:'',at:Date.now()});
+    await S.db.doc('bins/'+b.id).update({qr:row.id,at:Date.now()});
+  });
+  if(!ok) return;
+  logEv(`QR asignado a ${T(b.type).code} en ${cellRef(b.r,b.c)}: ${row.qr}`+(other&&other.id!==b.id?` (antes en ${cellRef(other.r,other.c)})`:''),b.map,'bin');
+  closeQr(); toast('QR asignado a la papelera.');
+}
+async function unassignQr(b){
+  if(!S.canWrite) return; const row=S.qr.get(b.qr);
+  if(await write(()=>S.db.doc('bins/'+b.id).update({qr:'',at:Date.now()}))) logEv(`QR quitado de ${T(b.type).code} en ${cellRef(b.r,b.c)}`+(row?`: ${row.qr}`:''),b.map,'bin');
+}
 function qrFiltered(){
   const q=qrF.q.trim().toLowerCase();
-  return qrSorted().filter(r=>(!qrF.sec||r.sec===qrF.sec)&&(!qrF.pl||r.pl===qrF.pl)&&(!q||(r.sec+' '+r.pl+' '+r.ub+' '+r.cont+' '+r.mat+' '+r.qr).toLowerCase().includes(q)));
+  const qb=qrF.as?qrBins():null;
+  return qrSorted().filter(r=>(!qrF.sec||r.sec===qrF.sec)&&(!qrF.pl||r.pl===qrF.pl)&&(!qb||(qrF.as==='si')===qb.has(r.id))&&(!q||(r.sec+' '+r.pl+' '+r.ub+' '+r.cont+' '+r.mat+' '+r.qr).toLowerCase().includes(q)));
 }
 function renderQr(){
   const box=$('qrview'); const prev=box.querySelector('.lvscroll'); const st0=prev?prev.scrollTop:0; box.replaceChildren(); if(!S.qrOpen) return;
@@ -1450,28 +1534,44 @@ function renderQr(){
   const mk=(key,label)=>{const s=el('select','field');s.setAttribute('aria-label',label);const o0=el('option',null,label+': todas');o0.value='';s.append(o0);
     for(const v of [...new Set(all.map(r=>r[key]).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es',{numeric:true}))){const o=el('option',null,v);o.value=v;if(v===qrF[key])o.selected=true;s.append(o)}
     s.onchange=()=>{qrF[key]=s.value;renderQr()};return s};
-  tools.append(q,mk('sec','Sección'),mk('pl','Planta')); modal.append(tools);
+  const asel=el('select','field'); asel.setAttribute('aria-label','Asignación'); for(const [v,t] of [['','Asignación: todas'],['si','Asignados a una papelera'],['no','Sin asignar']]){const o=el('option',null,t);o.value=v;if(v===qrF.as)o.selected=true;asel.append(o)}
+  asel.onchange=()=>{qrF.as=asel.value;renderQr()};
+  tools.append(q,mk('sec','Sección'),mk('pl','Planta'),asel); modal.append(tools);
+  const binOf=qrBins(), ab=qrAssign?S.bins.get(qrAssign):null;
+  if(qrAssign&&!ab) qrAssign=null;
+  if(ab){const bn=el('div','banner qrasg'); const mp=S.maps.get(ab.map);
+    bn.append(el('span',null,`Elige el QR para la papelera ${T(ab.type).code} de la celda ${cellRef(ab.r,ab.c)}${mp?' ('+mp.name+')':''} y pulsa «Asignar».`));
+    const cx=el('button','btn','Cancelar'); cx.type='button'; cx.onclick=closeQr; bn.append(cx); modal.append(bn)}
   const acts=el('div','lvtools');
   const btn=(t,fn,cls,dis)=>{const b=el('button','btn'+(cls?' '+cls:''),t);b.type='button';b.disabled=!!dis;b.onclick=fn;return b};
   const sel=rows.filter(r=>qrSel.has(r.id));
   acts.append(btn('＋ Añadir',()=>{qrSub={mode:'edit',row:null};renderQr()},'primary',!S.canWrite),
     btn('Importar tabla',()=>{qrSub={mode:'import'};renderQr()},'',!S.canWrite),
     btn(sel.length?`🖨 Etiquetas (${sel.length} marcadas)`:`🖨 Etiquetas (${rows.length})`,()=>openQrPrint(sel.length?sel:rows),'',!rows.length));
-  if(qrSel.size){const armed=qrArmed==='sel';acts.append(btn(armed?`Confirmar: borrar ${qrSel.size}`:`🗑 Borrar marcadas (${qrSel.size})`,async()=>{if(!armed){qrArmed='sel';renderQr();setTimeout(()=>{if(qrArmed==='sel'){qrArmed=null;if(S.qrOpen)renderQr()}},5000);return}qrArmed=null;await qrDelete([...qrSel])},armed?'danger':'',!S.canWrite))}
+  {const ex=sel.length?sel:rows, lab=sel.length?`${sel.length} marcadas`:String(rows.length);
+    const b1=btn(`⬇ Excel (${lab})`,()=>qrExport(ex,'xlsx'),'',!ex.length||!S.downloads); b1.title='Descarga un Excel solo con las filas marcadas o, si no hay ninguna marcada, con las que se ven con el filtro actual';
+    const b2=btn(`⬇ CSV (${lab})`,()=>qrExport(ex,'csv'),'',!ex.length||!S.downloads); b2.title='Igual que el Excel, en formato CSV';
+    acts.append(b1,b2)}
+  if(qrSel.size){const armed=qrArmed==='sel';acts.append(btn(armed?`Confirmar: borrar ${qrSel.size}`:`🗑 Borrar marcadas (${qrSel.size})`,async()=>{if(!armed){qrArmed='sel';renderQr();setTimeout(()=>{if(qrArmed==='sel'){qrArmed=null;if(S.qrOpen)renderQr()}},5000);return}qrArmed=null;qrSub={mode:'confirm',ids:[...qrSel]};renderQr()},armed?'danger':'',!S.canWrite))}
   modal.append(acts);
   const sc=el('div','lvscroll'); const tb=el('table','qrtab'); const th=el('thead'),hr=el('tr');
   const all0=el('input'); all0.type='checkbox'; all0.setAttribute('aria-label','Marcar todas las filas visibles'); all0.checked=rows.length>0&&rows.every(r=>qrSel.has(r.id));
   all0.onchange=()=>{for(const r of rows) all0.checked?qrSel.add(r.id):qrSel.delete(r.id);renderQr()};
-  const c0=el('th'); c0.append(all0); hr.append(c0); for(const [,l] of QRCOLS) hr.append(el('th',null,l)); hr.append(el('th',null,'Texto del QR'),el('th')); th.append(hr); tb.append(th);
+  const c0=el('th'); c0.append(all0); hr.append(c0); for(const [,l] of QRCOLS) hr.append(el('th',null,l)); hr.append(el('th',null,'Texto del QR'),el('th',null,'Papelera'),el('th')); th.append(hr); tb.append(th);
   const tbd=el('tbody');
   for(const r of rows.slice(0,600)){
     const tr=el('tr'); const c=el('td'); const cb=el('input'); cb.type='checkbox'; cb.checked=qrSel.has(r.id); cb.setAttribute('aria-label','Marcar fila'); cb.onchange=()=>{cb.checked?qrSel.add(r.id):qrSel.delete(r.id);renderQr()}; c.append(cb); tr.append(c);
     for(const [k] of QRCOLS) tr.append(el('td',null,r[k]||''));
     tr.append(el('td','qrt',r.qr));
+    {const td=el('td','qrb'), bb=binOf.get(r.id);
+      if(bb){const mp=S.maps.get(bb.map); const g=btn(`📍 Asignado · ${cellRef(bb.r,bb.c)}`,()=>{closeQr();jumpTo(bb)}); g.classList.add('sm','asg'); g.title=`Ver en planta: ${T(bb.type).code} en ${cellRef(bb.r,bb.c)}${mp?' · '+mp.name:''}`; td.append(g)}
+      else td.append(el('span','hint','Sin asignar'));
+      tr.append(td)}
     const a=el('td','qra');
+    if(ab&&S.canWrite){const cur=ab.qr===r.id; const ob=binOf.get(r.id), taken=!!ob&&ob.id!==ab.id; const g=btn(cur?'✓ Asignado':'Asignar',()=>{if(taken){qrSub={mode:'reassign',row:r,bin:ab.id};renderQr()}else assignQr(ab.id,r)},cur?'':(taken?'':'primary'),cur); if(taken)g.title='Este QR ya está asignado a otra papelera: pedirá confirmación'; g.classList.add('sm'); a.append(g)}
     const v=btn('▦ QR',()=>{qrSub={mode:'view',row:r};renderQr()}); v.classList.add('sm'); a.append(v);
     if(S.canWrite){const e=btn('✎',()=>{qrSub={mode:'edit',row:r};renderQr()}); e.classList.add('sm'); e.setAttribute('aria-label','Editar'); e.title='Editar';
-      const armed=qrArmed===r.id; const d=btn(armed?'¿Borrar?':'🗑',async()=>{if(!armed){qrArmed=r.id;renderQr();setTimeout(()=>{if(qrArmed===r.id){qrArmed=null;if(S.qrOpen)renderQr()}},4000);return}qrArmed=null;await qrDelete([r.id])},armed?'danger':''); d.classList.add('sm'); d.setAttribute('aria-label','Borrar'); d.title='Borrar'; a.append(e,d)}
+      const armed=qrArmed===r.id; const d=btn(armed?'¿Borrar?':'🗑',async()=>{if(!armed){qrArmed=r.id;renderQr();setTimeout(()=>{if(qrArmed===r.id){qrArmed=null;if(S.qrOpen)renderQr()}},4000);return}qrArmed=null;qrSub={mode:'confirm',ids:[r.id]};renderQr()},armed?'danger':''); d.classList.add('sm'); d.setAttribute('aria-label','Borrar'); d.title='Borrar'; a.append(e,d)}
     tr.append(a); tbd.append(tr);
   }
   tb.append(tbd); sc.append(tb);
@@ -1480,10 +1580,22 @@ function renderQr(){
   modal.append(sc); box.append(modal); sc.scrollTop=st0;
   if(qrSub) renderQrSub(box);
 }
+/* Exporta a Excel o CSV solo las filas indicadas (para mandar a imprimir). */
+async function qrExport(list,fmt){
+  const bm=qrBins(), head=['Sección','Planta','Ubicación','Contenedor','Material','Texto del QR','Papelera asignada','Celda','Planta del mapa'];
+  const rows=[head]; for(const r of list){const b=bm.get(r.id),mp=b?S.maps.get(b.map):null;rows.push([r.sec,r.pl,r.ub,r.cont,r.mat,r.qr,b?T(b.type).code:'',b?cellRef(b.r,b.c):'',mp?mp.name:''])}
+  const name=`qr_${isoDay()}_${list.length}`;
+  if(fmt==='csv'){
+    const q=v=>{v=String(v==null?'':v);return /[";\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
+    const txt='\ufeff'+rows.map(r=>r.map(q).join(';')).join('\r\n')+'\r\n';
+    await saveFile(name+'.csv',new Blob([txt],{type:'text/csv;charset=utf-8'}));
+  }else await saveFile(name+'.xlsx',makeXlsx([{name:'QR',rows,widths:[14,8,30,14,22,60,16,8,18]}]));
+}
 async function qrDelete(ids){
   if(!S.canWrite||!ids.length) return;
   const first=S.qr.get(ids[0]);
-  try{await Promise.all(ids.map(id=>S.db.doc('qr/'+id).delete()));
+  try{const gone=new Set(ids); await Promise.all([...S.bins.values()].filter(b=>b.qr&&gone.has(b.qr)).map(b=>S.db.doc('bins/'+b.id).update({qr:'',at:Date.now()})));
+    await Promise.all(ids.map(id=>S.db.doc('qr/'+id).delete()));
     logEv(ids.length===1&&first?`QR eliminado: ${first.qr}`:`${ids.length} QR eliminados de la tabla`,null,'qr');
     for(const id of ids) qrSel.delete(id); toast(ids.length===1?'Fila eliminada.':`${ids.length} filas eliminadas.`);
   }catch(e){toast('No se pudo borrar. Comprueba la conexión.')}
@@ -1491,7 +1603,31 @@ async function qrDelete(ids){
 function renderQrSub(box){
   const ov=el('div','modalback'); ov.style.zIndex='60'; const m=el('div','modal'); m.setAttribute('role','dialog'); m.setAttribute('aria-modal','true');
   const close=()=>{qrSub=null;renderQr()};
-  if(qrSub.mode==='view'){
+  if(qrSub.mode==='reassign'){
+    const r=qrSub.row, nb=S.bins.get(qrSub.bin), ob=qrBins().get(r.id);
+    if(!nb||!ob||ob.id===nb.id){qrSub=null;return}
+    const desc=b=>{const mp=S.maps.get(b.map);return `${T(b.type).code} de la celda ${cellRef(b.r,b.c)}${mp?' ('+mp.name+')':''}`};
+    m.setAttribute('aria-label','Confirmar cambio de asignación');
+    const mh=el('div','mhead edit'); mh.append(el('strong',null,'Este QR ya está asignado')); m.append(mh);
+    const b=el('div','fform'); const t=el('div','selqrt'); t.append(el('b',null,r.qr)); b.append(t);
+    b.append(el('div',null,`Ahora lo tiene la papelera ${desc(ob)}.`));
+    b.append(el('div','banner',`Si sigues, esa papelera se queda sin QR y pasa a la papelera ${desc(nb)}.`));
+    const row=el('div','row2'); const no=el('button','btn','Cancelar'); no.type='button'; no.onclick=close;
+    const yes=el('button','btn danger','Sí, cambiarlo a esta papelera'); yes.type='button'; yes.onclick=async()=>{yes.disabled=true;qrSub=null;await assignQr(nb.id,r)};
+    row.append(no,yes); b.append(row); m.append(b); setTimeout(()=>no.focus(),0);
+  }else if(qrSub.mode==='confirm'){
+    const ids=qrSub.ids.filter(id=>S.qr.has(id)), n=ids.length, bm=qrBins(), asg=ids.filter(id=>bm.has(id)).length;
+    m.setAttribute('aria-label','Confirmar borrado');
+    const mh=el('div','mhead edit'); mh.append(el('strong',null,n===1?'¿Borrar este QR?':`¿Borrar ${n} QR?`)); m.append(mh);
+    const b=el('div','fform');
+    if(n===1){const t=el('div','selqrt');t.append(el('b',null,S.qr.get(ids[0]).qr));b.append(t)}
+    else{const ul=el('div','hint',ids.slice(0,5).map(id=>S.qr.get(id).qr).join(' · ')+(n>5?` · y ${n-5} más`:''));ul.style.overflowWrap='anywhere';b.append(ul)}
+    if(asg) b.append(el('div','banner',asg===1&&n===1?'Este QR está asignado a una papelera. Al borrarlo, la papelera se queda sin QR.':`${asg} de ellos están asignados a papeleras, que se quedarán sin QR.`));
+    b.append(el('div','hint','Esta acción no se puede deshacer.'));
+    const row=el('div','row2'); const no=el('button','btn','Cancelar'); no.type='button'; no.onclick=close;
+    const yes=el('button','btn danger',n===1?'Sí, borrar':`Sí, borrar los ${n}`); yes.type='button'; yes.onclick=async()=>{yes.disabled=true;qrSub=null;await qrDelete(ids);if(S.qrOpen)renderQr()};
+    row.append(no,yes); b.append(row); m.append(b); setTimeout(()=>no.focus(),0);
+  }else if(qrSub.mode==='view'){
     const r=qrSub.row; m.setAttribute('aria-label','Código QR');
     const mh=el('div','mhead edit'); mh.append(el('strong',null,'Código QR'),el('span',null,r.qr)); m.append(mh);
     const b=el('div','fform'); b.style.alignItems='center';
@@ -1840,6 +1976,7 @@ function showTip(id,e){
     {const sc=secOf(b); if(sc) row('Sección',sc)}
     const mp=S.maps.get(b.map); if(mp) row('Planta',mp.name);
     if(b.at>1e12) row('Colocada',new Date(b.at).toLocaleDateString('es-ES'));
+    {const qr=b.qr?S.qr.get(b.qr):null; if(qr) t.append(el('div','tnote','QR: '+qr.qr))}
     if(b.note) t.append(el('div','tnote','Nota: '+b.note));
   }
   const br=$('board').getBoundingClientRect(); t.style.display='block';
@@ -1889,6 +2026,7 @@ stage.addEventListener('pointerdown',e=>{
     addBin(cell,S.brush);return}
   if(e.pointerType==='touch'&&(S.sel||S.selZone||S.selSec)){S.sel=null;S.selZone=null;S.selSec=null;renderBins();renderSecs();renderZones();renderSel()}
 });
+stage.addEventListener('click',e=>{if(e.pointerType==='touch'&&!S.brush&&!S.tool&&!e.target.closest('.bin,.zl,.sl'))markCell(cellAt(e))});
 stage.addEventListener('pointermove',e=>{
   if(S.tap&&Math.hypot(e.clientX-S.tap.x,e.clientY-S.tap.y)>8) S.tap=null;
   if(S.zdraw){S.zdraw.b=cellClamp(e);showRect('zghost',norm(S.zdraw.a,S.zdraw.b));return}
@@ -1938,7 +2076,7 @@ document.addEventListener('keydown',e=>{
     if(S.edMap!=null){cancelMapEditor();return}
     if(S.drawer){setDrawer(false);return}
     if(S.zdraw){S.zdraw=null;showRect('zghost',null);return}
-    S.brush=null;S.sel=null;S.selZone=null;S.selSec=null;S.tool=null;S.find='';renderAll();renderBins();return
+    S.brush=null;S.sel=null;S.selZone=null;S.selSec=null;S.tool=null;S.find='';S.cell=null;renderAll();renderBins();return
   }
   if(e.key==='/'&&!['input','select','textarea'].includes(tag)){e.preventDefault();openSearch();return}
   if(tag==='input'||tag==='select'||tag==='textarea'||tag==='button') return;
@@ -1964,7 +2102,8 @@ document.addEventListener('keydown',e=>{
 $('zin').onclick=()=>zoomBy(1.5);
 $('zout').onclick=()=>zoomBy(1/1.5);
 $('zfit').onclick=()=>{S.fit=true;applyScale()};
-$('gridbtn').onclick=e=>{S.grid=!S.grid;e.currentTarget.setAttribute('aria-pressed',String(S.grid));const g=$('gridlayer');if(g)g.hidden=!S.grid};
+$('gridbtn').onclick=e=>{S.grid=!S.grid;e.currentTarget.setAttribute('aria-pressed',String(S.grid));const g=$('gridlayer');if(g)g.hidden=!S.grid;renderRulers();if(S.fit)applyScale()};
+$('vp').addEventListener('scroll',queueRulers,{passive:true});
 $('grp').onchange=e=>{S.group=e.target.value;renderBins()};
 $('q').oninput=e=>{S.q=e.target.value;renderLegend()};
 $('secbtn').onclick=()=>{if(!S.canWrite){toast('Tu acceso es de solo lectura.');return}
@@ -2039,7 +2178,8 @@ function zoomBy(f,cx,cy){
   const end=e=>{
     if(!pan||(e&&e.pointerId!==pan.id)) return; const p=pan; pan=null; vp.classList.remove('panning');
     try{vp.releasePointerCapture(p.id)}catch(_){}
-    if(!p.moved){ if(S.sel||S.selZone||S.selSec){S.sel=null;S.selZone=null;S.selSec=null;renderBins();renderSecs();renderZones();renderSel()} return }
+    if(!p.moved){ if(S.sel||S.selZone||S.selSec){S.sel=null;S.selZone=null;S.selSec=null;renderBins();renderSecs();renderZones();renderSel()}
+      if(e&&e.type==='pointerup'&&e.button===0){const cell=cellAt(e); const same=cell&&S.cell&&S.cell.map===S.map&&S.cell.r===cell.r&&S.cell.c===cell.c; markCell(same?null:cell)} return }
     S.panMovedAt=performance.now();
     const a=p.pts[0],b=p.pts[p.pts.length-1],dt=b[0]-a[0]; if(dt<5||performance.now()-b[0]>80) return;
     let vx=(b[1]-a[1])/dt,vy=(b[2]-a[2])/dt; const id=++inertia; let last=performance.now();
@@ -2105,7 +2245,7 @@ async function start(){
   db.collection('qr').onSnapshot(snap=>{
     const next=new Map(),ss=v=>typeof v==='string'?v:'';
     for(const d of snap.docs){const v=d.data(); if(v&&typeof v.qr==='string') next.set(d.id,{id:d.id,sec:ss(v.sec),pl:ss(v.pl),ub:ss(v.ub),cont:ss(v.cont),mat:ss(v.mat),qr:v.qr,n:typeof v.n==='number'?v.n:0})}
-    S.qr=next; if(S.qrOpen) renderQr();
+    S.qr=next; if(S.qrOpen) renderQr(); renderSel();
   },()=>{});
   db.collection('secs').onSnapshot(snap=>{
     const next=new Map(); const okc=x=>/^#[0-9a-f]{6}$/i.test(x||'');
@@ -2127,8 +2267,8 @@ async function start(){
     const next=new Map();
     for(const d of snap.docs){const v=d.data();
       if(v&&Number.isInteger(v.r)&&Number.isInteger(v.c)&&(typeof v.type==='string'||typeof v.code==='string')&&typeof v.map==='string')
-        next.set(d.id,{id:d.id,map:v.map,r:v.r,c:v.c,type:v.type||slug(v.code),note:typeof v.note==='string'?v.note:'',at:v.at||0})}
-    S.bins=next; S.binsLoaded=true; if(S.sel&&!next.has(S.sel)) S.sel=null;
+        next.set(d.id,{id:d.id,map:v.map,r:v.r,c:v.c,type:v.type||slug(v.code),note:typeof v.note==='string'?v.note:'',qr:typeof v.qr==='string'?v.qr:'',at:v.at||0})}
+    S.bins=next; S.binsLoaded=true; if(S.sel&&!next.has(S.sel)) S.sel=null; if(S.qrOpen) renderQr();
     renderAll();
   },bad);
 }
