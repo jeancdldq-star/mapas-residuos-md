@@ -171,6 +171,7 @@ label.lbl{font-size:12px;color:var(--muted);display:block;margin-bottom:3px}
 .zsw{width:14px;height:14px;border-radius:3px;border:2px solid;flex:0 0 14px}
 .chk{display:flex;gap:6px;align-items:center;font-size:13px}
 .modal.wide{width:min(900px,100%);display:flex;flex-direction:column;max-height:calc(100% - 8px)}
+.modal.wide.xl{width:min(1500px,100%)}
 .lvhead{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
 .lvhead strong{font-family:var(--f-display);font-size:18px;display:block}
 .lvmeta{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:2px}
@@ -211,7 +212,7 @@ table.lv tfoot td{font-weight:700;border-top:2px solid var(--ink);position:stick
 .qrtab{width:100%;border-collapse:collapse;font-size:13px}
 .qrtab th{position:sticky;top:0;background:var(--panel);text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted);z-index:1}
 .qrtab td{padding:5px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
-.qrtab .qrt{font-family:var(--f-mono);font-size:11px;color:var(--muted);overflow-wrap:anywhere;min-width:140px;max-width:210px}
+.qrtab .qrt{font-family:var(--f-mono);font-size:11px;color:var(--muted);overflow-wrap:anywhere;min-width:140px}
 .qrtab .qrb{white-space:nowrap}
 .btn.asg{background:var(--accent-soft);border-color:var(--accent);font-weight:600}
 .banner.qrasg{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
@@ -344,6 +345,8 @@ button,.chip{-webkit-tap-highlight-color:transparent}
   <div class="banner" id="ro" hidden>Tienes acceso de solo lectura. Para colocar o mover papeleras necesitas el código de edición.</div>
 
   <div class="maptools" role="toolbar" aria-label="Herramientas del mapa">
+      <button class="btn" id="undobtn" type="button" aria-label="Deshacer" disabled>↶</button>
+      <button class="btn" id="redobtn" type="button" aria-label="Rehacer" disabled>↷</button>
       <button class="btn" id="zout" type="button" aria-label="Alejar">−</button>
       <span class="zoomv" id="zv">100%</span>
       <button class="btn" id="zin" type="button" aria-label="Acercar">+</button>
@@ -501,7 +504,7 @@ function renderCell(){
   const q=rect(k.r,k.c,k.r,k.c); cm.style.left=q.x+'px'; cm.style.top=q.y+'px'; cm.style.width=q.w+'px'; cm.style.height=q.h+'px'; cm.style.display='block';
   cm.firstChild.textContent='Celda '+cellRef(k.r,k.c); cm.firstChild.style.transform=`scale(${1/S.scale})`; renderRulers();
 }
-function markCell(cell){S.cell=cell?{map:S.map,r:cell.r,c:cell.c}:null;renderCell()}
+function markCell(cell){S.cell=cell&&S.grid?{map:S.map,r:cell.r,c:cell.c}:null;renderCell()}
 /* letras de columna y números de fila, como en el Excel (solo con la cuadrícula activada) */
 let rulRaf=0;
 function renderRulers(){
@@ -577,10 +580,10 @@ function renderSel(){
   const f1=el('div'); const l1=el('label','lbl','Tipo'); l1.htmlFor='selcode'; const sel=el('select','field'); sel.id='selcode'; sel.disabled=!w;
   if(!S.types.has(b.type)){const o=el('option',null,'Tipo eliminado: elige uno nuevo');o.value='';o.selected=true;o.disabled=true;sel.append(o)}
   for(const y of typeList()){const o=el('option',null,`${y.code} · ${y.name}`);o.value=y.id;if(y.id===b.type)o.selected=true;sel.append(o)}
-  sel.onchange=async()=>{const old=T(b.type),nw=T(sel.value);if(await write(()=>S.db.doc('bins/'+b.id).update({type:sel.value,at:Date.now()}))) logEv(`Cambio de tipo en ${cellRef(b.r,b.c)}: ${old.code} → ${nw.code}`,b.map,'bin')};
+  sel.onchange=async()=>{const old=T(b.type),nw=T(sel.value);const nt=sel.value;if(await write(()=>S.db.doc('bins/'+b.id).update({type:nt,at:Date.now()}))){logEv(`Cambio de tipo en ${cellRef(b.r,b.c)}: ${old.code} → ${nw.code}`,b.map,'bin');pushHist(`cambiar tipo en ${cellRef(b.r,b.c)} (${old.code} → ${nw.code})`,[{id:b.id,before:binDoc(b),after:{...binDoc(b),type:nt}}])}};
   f1.append(l1,sel);
   const f2=el('div'); const l2=el('label','lbl','Nota (ubicación exacta, observaciones)'); l2.htmlFor='selnote'; const inp=el('input','field'); inp.id='selnote'; inp.maxLength=160; inp.value=b.note||''; inp.disabled=!w;
-  inp.onchange=async()=>{const v=inp.value.trim();if(await write(()=>S.db.doc('bins/'+b.id).update({note:v,at:Date.now()}))) logEv(v?`Nota en ${cellRef(b.r,b.c)} (${T(b.type).code}): «${v}»`:`Nota borrada en ${cellRef(b.r,b.c)} (${T(b.type).code})`,b.map,'bin')};
+  inp.onchange=async()=>{const v=inp.value.trim();if(v===(b.note||''))return;if(await write(()=>S.db.doc('bins/'+b.id).update({note:v,at:Date.now()}))){logEv(v?`Nota en ${cellRef(b.r,b.c)} (${T(b.type).code}): «${v}»`:`Nota borrada en ${cellRef(b.r,b.c)} (${T(b.type).code})`,b.map,'bin');pushHist(`cambiar la nota de ${cellRef(b.r,b.c)}`,[{id:b.id,before:binDoc(b),after:{...binDoc(b),note:v}}])}};
   f2.append(l2,inp);
   const row=el('div','row2'); const ar=el('div','arrows');
   const mk=(txt,dr,dc,lab)=>{const y=el('button','btn',txt);y.type='button';y.setAttribute('aria-label',lab);y.disabled=!w;y.onclick=()=>moveBy(b,dr,dc);return y};
@@ -672,6 +675,33 @@ function showBox(id,cell){const d=$(id);if(!d)return;if(!cell){d.style.display='
 
 /* ---------- escrituras ---------- */
 let busy=false;
+/* ---------- deshacer / rehacer (cambios de papeleras hechos en esta sesión) ---------- */
+const HIST={undo:[],redo:[]};
+const binDoc=b=>b?{map:b.map,r:b.r,c:b.c,type:b.type,note:b.note||'',qr:b.qr||''}:null;
+const sameDoc=(a,b)=>(!a&&!b)||(!!a&&!!b&&a.map===b.map&&a.r===b.r&&a.c===b.c&&a.type===b.type&&(a.note||'')===(b.note||'')&&(a.qr||'')===(b.qr||''));
+function pushHist(label,ch){HIST.undo.push({label,ch});if(HIST.undo.length>60)HIST.undo.shift();HIST.redo.length=0;renderHist()}
+function renderHist(){
+  const u=$('undobtn'),r=$('redobtn'); if(!u) return; const lu=HIST.undo[HIST.undo.length-1], lr=HIST.redo[HIST.redo.length-1];
+  u.disabled=!lu||!S.canWrite; r.disabled=!lr||!S.canWrite;
+  u.title=lu?'Deshacer: '+lu.label+' (Ctrl+Z)':'No hay nada que deshacer'; r.title=lr?'Rehacer: '+lr.label+' (Ctrl+Y)':'No hay nada que rehacer';
+}
+let histBusy=false;
+async function stepHist(dir){
+  if(histBusy||!S.canWrite) return; const src=dir==='undo'?HIST.undo:HIST.redo, dst=dir==='undo'?HIST.redo:HIST.undo, rec=src[src.length-1];
+  if(!rec){toast(dir==='undo'?'No hay nada que deshacer.':'No hay nada que rehacer.');return}
+  const from=dir==='undo'?'after':'before', to=dir==='undo'?'before':'after';
+  for(const c of rec.ch) if(!sameDoc(binDoc(S.bins.get(c.id)),c[from])){src.pop();renderHist();toast((dir==='undo'?'No se puede deshacer «':'No se puede rehacer «')+rec.label+'»: esa papelera ha cambiado después.');return}
+  histBusy=true;
+  const ok=await write(async()=>{
+    for(const c of rec.ch) if(c[to]) await S.db.doc('bins/'+c.id).set({...c[to],at:Date.now()});
+    for(const c of rec.ch) if(!c[to]) await S.db.doc('bins/'+c.id).delete();
+  });
+  histBusy=false; if(!ok) return;
+  src.pop(); dst.push(rec); renderHist();
+  const keep=rec.ch.find(c=>c[to]); logEv((dir==='undo'?'Deshecho: ':'Rehecho: ')+rec.label,keep?keep[to].map:rec.ch[0][from].map,'bin');
+  if(keep&&keep[to].map===S.map){S.sel=keep.id;S.selZone=null;S.selSec=null}else if(S.sel&&rec.ch.some(c=>c.id===S.sel&&!c[to])) S.sel=null;
+  renderAll(); toast((dir==='undo'?'Deshecho: ':'Rehecho: ')+rec.label);
+}
 async function write(fn){
   if(!S.db||!S.canWrite){toast('No tienes permiso para modificar los mapas.');return false}
   try{await fn();return true}
@@ -679,20 +709,21 @@ async function write(fn){
 }
 async function addBin(cell,type){
   const id=bid(S.map,cell.r,cell.c); if(S.bins.has(id)) return;
-  if(await write(()=>S.db.doc('bins/'+id).set({map:S.map,r:cell.r,c:cell.c,type,note:'',at:Date.now()}))) logEv(`Colocada ${typeDesc(S.types.get(type))} en ${cellRef(cell.r,cell.c)}`,S.map,'bin');
+  const nd={map:S.map,r:cell.r,c:cell.c,type,note:'',qr:''};
+  if(await write(()=>S.db.doc('bins/'+id).set({...nd,at:Date.now()}))){logEv(`Colocada ${typeDesc(S.types.get(type))} en ${cellRef(cell.r,cell.c)}`,S.map,'bin');pushHist(`colocar ${T(type).code} en ${cellRef(cell.r,cell.c)}`,[{id,before:null,after:nd}])}
 }
 async function moveTo(b,r2,c2){
   const m=curMap(); if(!m||r2<1||c2<1||r2>m.rows||c2>m.cols) return;
   const nid=bid(b.map,r2,c2); if(nid===b.id||S.bins.has(nid)) return;
   if(busy) return; busy=true;
   const ok=await write(async()=>{await S.db.doc('bins/'+nid).set({map:b.map,r:r2,c:c2,type:b.type,note:b.note||'',qr:b.qr||'',at:Date.now()});await S.db.doc('bins/'+b.id).delete()});
-  busy=false; if(ok){logEv(`Movida ${T(b.type).code} de ${cellRef(b.r,b.c)} a ${cellRef(r2,c2)}`,b.map,'bin');S.sel=nid;renderAll()}
+  busy=false; if(ok){logEv(`Movida ${T(b.type).code} de ${cellRef(b.r,b.c)} a ${cellRef(r2,c2)}`,b.map,'bin');pushHist(`mover ${T(b.type).code} de ${cellRef(b.r,b.c)} a ${cellRef(r2,c2)}`,[{id:b.id,before:binDoc(b),after:null},{id:nid,before:null,after:{...binDoc(b),r:r2,c:c2}}]);S.sel=nid;renderAll()}
 }
 function moveBy(b,dr,dc){moveTo(b,b.r+dr,b.c+dc)}
 async function removeBin(b){
   const copy={map:b.map,r:b.r,c:b.c,type:b.type,note:b.note||'',qr:b.qr||'',at:Date.now()};
   const ok=await write(()=>S.db.doc('bins/'+b.id).delete());
-  if(ok){logEv(`Borrada ${typeDesc(S.types.get(b.type))} de ${cellRef(b.r,b.c)}`,b.map,'bin');S.sel=null;toast('Papelera borrada.','Deshacer',async()=>{if(await write(()=>S.db.doc('bins/'+b.id).set(copy))) logEv(`Restaurada ${T(b.type).code} en ${cellRef(b.r,b.c)}`,b.map,'bin')})}
+  if(ok){logEv(`Borrada ${typeDesc(S.types.get(b.type))} de ${cellRef(b.r,b.c)}`,b.map,'bin');S.sel=null;const rec={label:`borrar ${T(b.type).code} de ${cellRef(b.r,b.c)}`};pushHist(rec.label,[{id:b.id,before:binDoc(b),after:null}]);const mine=HIST.undo[HIST.undo.length-1];toast('Papelera borrada.','Deshacer',()=>{if(HIST.undo[HIST.undo.length-1]===mine)stepHist('undo');else toast('Usa el botón Deshacer de la barra.')})}
 }
 
 /* ---------- ayudas de formulario ---------- */
@@ -1508,12 +1539,13 @@ async function assignQr(binId,row){
     await S.db.doc('bins/'+b.id).update({qr:row.id,at:Date.now()});
   });
   if(!ok) return;
+  {const ch=[{id:b.id,before:binDoc(b),after:{...binDoc(b),qr:row.id}}]; if(other&&other.id!==b.id) ch.unshift({id:other.id,before:binDoc(other),after:{...binDoc(other),qr:''}}); pushHist(`asignar QR a ${T(b.type).code} en ${cellRef(b.r,b.c)}`,ch)}
   logEv(`QR asignado a ${T(b.type).code} en ${cellRef(b.r,b.c)}: ${row.qr}`+(other&&other.id!==b.id?` (antes en ${cellRef(other.r,other.c)})`:''),b.map,'bin');
   closeQr(); toast('QR asignado a la papelera.');
 }
 async function unassignQr(b){
   if(!S.canWrite) return; const row=S.qr.get(b.qr);
-  if(await write(()=>S.db.doc('bins/'+b.id).update({qr:'',at:Date.now()}))) logEv(`QR quitado de ${T(b.type).code} en ${cellRef(b.r,b.c)}`+(row?`: ${row.qr}`:''),b.map,'bin');
+  if(await write(()=>S.db.doc('bins/'+b.id).update({qr:'',at:Date.now()}))){logEv(`QR quitado de ${T(b.type).code} en ${cellRef(b.r,b.c)}`+(row?`: ${row.qr}`:''),b.map,'bin');pushHist(`quitar el QR de ${T(b.type).code} en ${cellRef(b.r,b.c)}`,[{id:b.id,before:binDoc(b),after:{...binDoc(b),qr:''}}])}
 }
 function qrFiltered(){
   const q=qrF.q.trim().toLowerCase();
@@ -1523,7 +1555,7 @@ function qrFiltered(){
 function renderQr(){
   const box=$('qrview'); const prev=box.querySelector('.lvscroll'); const st0=prev?prev.scrollTop:0; box.replaceChildren(); if(!S.qrOpen) return;
   const rows=qrFiltered(), all=qrSorted();
-  const modal=el('div','modal wide'); modal.setAttribute('role','dialog'); modal.setAttribute('aria-modal','true'); modal.setAttribute('aria-label','Códigos QR');
+  const modal=el('div','modal wide xl'); modal.setAttribute('role','dialog'); modal.setAttribute('aria-modal','true'); modal.setAttribute('aria-label','Códigos QR');
   const head=el('div','lvhead'); const hl=el('div'); hl.append(el('strong',null,'Códigos QR'));
   const meta=el('div','lvmeta'); meta.append(el('span',null,rows.length===all.length?`${all.length} contenedores`:`${rows.length} de ${all.length} contenedores`)); hl.append(meta);
   const x=el('button','btn','Cerrar ✕'); x.type='button'; x.onclick=closeQr; head.append(hl,x); modal.append(head);
@@ -2078,6 +2110,7 @@ document.addEventListener('keydown',e=>{
     if(S.zdraw){S.zdraw=null;showRect('zghost',null);return}
     S.brush=null;S.sel=null;S.selZone=null;S.selSec=null;S.tool=null;S.find='';S.cell=null;renderAll();renderBins();return
   }
+  if((e.ctrlKey||e.metaKey)&&!e.altKey&&!['input','select','textarea'].includes(tag)){const k=e.key.toLowerCase(); if(k==='z'){e.preventDefault();stepHist(e.shiftKey?'redo':'undo');return} if(k==='y'){e.preventDefault();stepHist('redo');return}}
   if(e.key==='/'&&!['input','select','textarea'].includes(tag)){e.preventDefault();openSearch();return}
   if(tag==='input'||tag==='select'||tag==='textarea'||tag==='button') return;
   const dir={ArrowUp:[-1,0],ArrowDown:[1,0],ArrowLeft:[0,-1],ArrowRight:[0,1]}[e.key];
@@ -2099,10 +2132,12 @@ document.addEventListener('keydown',e=>{
 });
 
 /* ---------- controles ---------- */
+$('undobtn').onclick=()=>stepHist('undo');
+$('redobtn').onclick=()=>stepHist('redo');
 $('zin').onclick=()=>zoomBy(1.5);
 $('zout').onclick=()=>zoomBy(1/1.5);
 $('zfit').onclick=()=>{S.fit=true;applyScale()};
-$('gridbtn').onclick=e=>{S.grid=!S.grid;e.currentTarget.setAttribute('aria-pressed',String(S.grid));const g=$('gridlayer');if(g)g.hidden=!S.grid;renderRulers();if(S.fit)applyScale()};
+$('gridbtn').onclick=e=>{S.grid=!S.grid;e.currentTarget.setAttribute('aria-pressed',String(S.grid));const g=$('gridlayer');if(g)g.hidden=!S.grid;if(!S.grid)S.cell=null;renderCell();if(S.fit)applyScale()};
 $('vp').addEventListener('scroll',queueRulers,{passive:true});
 $('grp').onchange=e=>{S.group=e.target.value;renderBins()};
 $('q').oninput=e=>{S.q=e.target.value;renderLegend()};
