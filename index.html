@@ -76,8 +76,13 @@ h1{font-family:var(--f-display);font-size:18px;line-height:1.1;margin:0;letter-s
 #stage{position:absolute;left:0;top:0;transform-origin:0 0;background:var(--map);color:var(--map-ink);user-select:none;-webkit-user-select:none}
 #stage .bgimg{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;pointer-events:none;-webkit-user-drag:none}
 #stage .gridl{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(to right,var(--map-line) 1px,transparent 1px),linear-gradient(to bottom,var(--map-line) 1px,transparent 1px);box-shadow:inset -1px -1px 0 var(--map-line)}
-#stage .bin{position:absolute;display:flex;align-items:center;justify-content:center;border-radius:0;border:1px solid #000;font-family:var(--f-mono);font-weight:600;letter-spacing:-.04em;white-space:nowrap;overflow:hidden;cursor:grab}
+#stage .bin{position:absolute;display:flex;align-items:center;justify-content:center;line-height:1;border-radius:0;border:1px solid #000;font-family:var(--f-mono);font-weight:600;letter-spacing:-.04em;white-space:nowrap;overflow:hidden;cursor:grab}
 #stage .bin.dim{opacity:.16}
+#ping{position:absolute;width:0;height:0;pointer-events:none;z-index:7;transform:scale(var(--k,1))}
+#ping i{position:absolute;left:-46px;top:-46px;width:92px;height:92px;border-radius:50%;border:4px solid #ff2d55;box-shadow:0 0 0 2px #fff inset,0 0 0 2px #fff;opacity:0;animation:ping 1.4s ease-out 3}
+#ping i:nth-child(2){animation-delay:.35s}#ping i:nth-child(3){animation-delay:.7s}
+@keyframes ping{0%{transform:scale(.25);opacity:1}80%{opacity:.5}100%{transform:scale(1.25);opacity:0}}
+@media (prefers-reduced-motion:reduce){#ping i{animation:none;opacity:0}#ping i:first-child{opacity:1;transform:scale(.6)}}
 #stage .bin.sel{outline:3px solid #0b6bff;outline-offset:1px;z-index:5}
 #stage #cellmark{position:absolute;border:2px solid var(--accent);background:rgba(11,107,90,.14);pointer-events:none;display:none;z-index:6}
 #stage #cellmark span{position:absolute;left:-2px;bottom:100%;transform-origin:0 100%;background:var(--accent);color:var(--accent-ink);font:600 11px/1 var(--f-mono);padding:3px 6px;white-space:nowrap}
@@ -325,13 +330,13 @@ button,.chip{-webkit-tap-highlight-color:transparent}
     <div class="actions">
       <button class="btn" id="searchbtn" type="button" aria-expanded="false" title="Buscar una papelera (tecla /)">🔍 Buscar</button>
       <button class="btn" id="legendbtn" type="button">Leyenda</button>
+      <button class="btn" id="qrbtn" type="button">▦ Códigos QR</button>
       <button class="btn" id="gearbtn" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Ajustes de plantas y panel" title="Plantas y panel">⚙</button>
       <button class="btn" id="morebtn" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Más opciones" title="Historial, imprimir, exportar">⋯</button>
     </div>
     <div class="menu" id="gearmenu" role="menu" hidden>
       <button class="mi" id="newmap" type="button" role="menuitem" disabled>＋ Nueva planta</button>
       <button class="mi" id="editmap2" type="button" role="menuitem" disabled>✎ Editar planta</button>
-      <button class="mi" id="qrbtn" type="button" role="menuitem">▦ Códigos QR</button>
       <button class="mi" id="panelbtn" type="button" role="menuitem" aria-expanded="false" aria-controls="drawer">☰ Panel (tipos de papelera)</button>
     </div>
     <div class="menu" id="moremenu" role="menu" hidden>
@@ -490,7 +495,10 @@ function buildStage(){
 function applyScale(){
   const m=curMap(), vp=$('vp'); if(!m) return; CW=cwOf(m);
   const W=m.cols*CW, H=m.rows*CELL;
-  if(S.fit){S.scale=Math.max(.25,Math.min(6,(vp.clientWidth-2)/W))}
+  /* el alto de celda en pantalla es siempre un número entero de píxeles: así todas las papeleras caen igual sobre la rejilla de píxeles y el texto queda centrado igual en todas */
+  const qd=CELL*(window.devicePixelRatio||1);
+  if(S.fit){S.scale=Math.max(.25,Math.min(6,(vp.clientWidth-2)/W));S.scale=Math.max(3/qd,Math.floor(S.scale*qd)/qd);S.zraw=S.scale}
+  else{const q=Math.max(3/qd,Math.round(S.scale*qd)/qd); if(S.zraw==null||Math.abs(Math.round(S.zraw*qd)/qd-q)>1e-6) S.zraw=S.scale; S.scale=q}
   $('stage').style.transform=`scale(${S.scale})`;
   $('sizer').style.width=W*S.scale+'px'; $('sizer').style.height=H*S.scale+'px';
   $('zv').textContent=Math.round(S.scale*100)+'%';
@@ -597,7 +605,7 @@ function renderSel(){
   if(qrow){
     const tx=el('div','selqrt'); tx.append(el('span','lbl','QR asignado'),el('b',null,qrow.qr)); qb.append(tx);
     const r2=el('div','row2'); r2.append(qbtn('▦ Ver QR',()=>{S.qrOpen=true;qrAssign=null;qrSub={mode:'view',row:qrow};renderQr()}));
-    if(w) r2.append(qbtn('Cambiar',()=>openQrAssign(b)),qbtn('Quitar',()=>unassignQr(b)));
+    if(w){const qx=qbtn('Quitar',()=>{if(qx.dataset.arm){unassignQr(b);return} qx.dataset.arm='1';qx.textContent='Confirmar: quitar QR';qx.classList.add('danger');setTimeout(()=>{if(qx.isConnected){delete qx.dataset.arm;qx.textContent='Quitar';qx.classList.remove('danger')}},4000)}); r2.append(qbtn('Cambiar',()=>openQrAssign(b)),qx)}
     qb.append(r2);
   }else{
     const a=qbtn('▦ Asignar QR',()=>openQrAssign(b)); a.disabled=!w; if(!w)a.title='Tu acceso es de solo lectura'; qb.append(a);
@@ -1077,9 +1085,20 @@ function findMatches(q){const tk=toks(q);if(!tk.length)return [];
   out.sort((a,b)=>rank(a)-rank(b)||(mapList().findIndex(m=>m.id===a.map)-mapList().findIndex(m=>m.id===b.map))||a.r-b.r||a.c-b.c);
   return out}
 function scrollToCell(r,c){const vp=$('vp');vp.scrollTo({left:Math.max(0,(c-.5)*CW*S.scale-vp.clientWidth/2),top:Math.max(0,(r-.5)*CELL*S.scale-vp.clientHeight/2),behavior:'smooth'})}
-function jumpTo(b){
+function jumpTo(b,zoom){
   if(S.map!==b.map) selectMap(b.map);
-  S.sel=b.id; S.selZone=null;S.selSec=null; S.tool=null; renderAll(); setTimeout(()=>scrollToCell(b.r,b.c),30);
+  S.sel=b.id; S.selZone=null;S.selSec=null; S.tool=null;
+  if(zoom&&S.scale<zoom){S.fit=false;S.scale=zoom;S.zraw=zoom;applyScale()}
+  renderAll(); setTimeout(()=>{scrollToCell(b.r,b.c);pingBin(b)},30);
+}
+/* aviso llamativo sobre una papelera: anillos que laten unos segundos */
+let pingT=0;
+function pingBin(b){
+  const st=$('stage'); if(!st||b.map!==S.map) return; const old=$('ping'); if(old) old.remove();
+  const q=rect(b.r,b.c,b.r,b.c), p=el('div'); p.id='ping'; p.setAttribute('aria-hidden','true');
+  p.style.left=(q.x+q.w/2)+'px'; p.style.top=(q.y+q.h/2)+'px'; p.style.setProperty('--k',String(1/S.scale));
+  p.append(el('i'),el('i'),el('i')); st.append(p);
+  clearTimeout(pingT); pingT=setTimeout(()=>{const e=$('ping');if(e)e.remove()},4200);
 }
 function closeSearch(){S.searchOpen=false;$('searchpop').hidden=true;$('searchbtn').setAttribute('aria-expanded','false')}
 function openSearch(){
@@ -1596,7 +1615,7 @@ function renderQr(){
     for(const [k] of QRCOLS) tr.append(el('td',null,r[k]||''));
     tr.append(el('td','qrt',r.qr));
     {const td=el('td','qrb'), bb=binOf.get(r.id);
-      if(bb){const mp=S.maps.get(bb.map); const g=btn(`📍 Asignado · ${cellRef(bb.r,bb.c)}`,()=>{closeQr();jumpTo(bb)}); g.classList.add('sm','asg'); g.title=`Ver en planta: ${T(bb.type).code} en ${cellRef(bb.r,bb.c)}${mp?' · '+mp.name:''}`; td.append(g)}
+      if(bb){const mp=S.maps.get(bb.map); const g=btn(`📍 Asignado · ${cellRef(bb.r,bb.c)}`,()=>{closeQr();jumpTo(bb,3)}); g.classList.add('sm','asg'); g.title=`Ver en planta: ${T(bb.type).code} en ${cellRef(bb.r,bb.c)}${mp?' · '+mp.name:''}`; td.append(g)}
       else td.append(el('span','hint','Sin asignar'));
       tr.append(td)}
     const a=el('td','qra');
@@ -2156,7 +2175,7 @@ $('findx').onclick=clearFind;
 $('morebtn').onclick=()=>setMenu(!S.menu);
 $('gearbtn').onclick=()=>setGear(!S.gear);
 $('qrbtn').onclick=()=>openQr();
-for(const id of ['newmap','editmap2','panelbtn','qrbtn'])$(id).addEventListener('click',()=>setGear(false));
+for(const id of ['newmap','editmap2','panelbtn'])$(id).addEventListener('click',()=>setGear(false));
 $('printbtn').onclick=()=>{setMenu(false);openPrint()};
 $('exportbtn').onclick=()=>{setMenu(false);openExport()};
 $('whobtn').onclick=()=>{setMenu(false);askName(true)};
@@ -2169,9 +2188,9 @@ $('bx').onclick=()=>{S.brush=null;renderAll()};
 /* ---------- navegación tipo Google Maps: arrastrar, rueda, doble clic ---------- */
 function anchorZoom(ns,cx,cy){
   const vp=$('vp'),st=$('stage'); if(!curMap()) return;
-  ns=Math.max(.2,Math.min(8,ns)); if(Math.abs(ns-S.scale)<1e-4) return;
+  ns=Math.max(.2,Math.min(8,ns)); S.zraw=ns; {const qd=CELL*(window.devicePixelRatio||1); if(!S.fit&&Math.abs(Math.max(3/qd,Math.round(ns*qd)/qd)-S.scale)<1e-6) return}
   const r=st.getBoundingClientRect(), bx=(cx-r.left)/S.scale, by=(cy-r.top)/S.scale;
-  S.fit=false; S.scale=ns; applyScale();
+  const raw=ns; S.fit=false; S.scale=ns; applyScale(); S.zraw=raw; ns=S.scale;
   const r2=st.getBoundingClientRect();
   vp.scrollLeft+= r2.left+bx*ns-cx; vp.scrollTop+= r2.top+by*ns-cy;
 }
@@ -2188,7 +2207,7 @@ function zoomBy(f,cx,cy){
   vp.addEventListener('wheel',e=>{
     if(!curMap()) return; e.preventDefault(); zanim++;
     const dy=e.deltaMode===1?e.deltaY*16:e.deltaMode===2?e.deltaY*400:e.deltaY;
-    anchorZoom(S.scale*Math.exp(-dy*(e.ctrlKey?.01:.0018)),e.clientX,e.clientY);
+    anchorZoom((S.zraw||S.scale)*Math.exp(-dy*(e.ctrlKey?.01:.0018)),e.clientX,e.clientY);
   },{passive:false});
   function panStart(e){
     stopInertia(); zanim++;
