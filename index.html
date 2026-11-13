@@ -219,6 +219,9 @@ table.lv tfoot td{font-weight:700;border-top:2px solid var(--ink);position:stick
 .qrtab td{padding:5px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
 .qrtab .qrt{font-family:var(--f-mono);font-size:11px;color:var(--muted);overflow-wrap:anywhere;min-width:140px}
 .qrtab .qrb{white-space:nowrap}
+.qrtab tr.qrcur td,.qrtab tr.qrcur .qra{background:var(--accent-soft)}
+.qrtab tr.qrcur td:first-child{box-shadow:inset 4px 0 0 var(--accent)}
+.qrtab .curtag{display:block;font-family:var(--f-body);font-size:11px;font-weight:700;color:var(--accent);margin-bottom:2px}
 .btn.asg{background:var(--accent-soft);border-color:var(--accent);font-weight:600}
 .banner.qrasg{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .selqr{border-top:1px solid var(--line);padding-top:8px;display:flex;flex-direction:column;gap:6px}
@@ -1539,14 +1542,14 @@ function qrCanvas(text,px,quiet){
 }
 const qrNewId=i=>'q_'+Date.now().toString(36)+(i==null?Math.random().toString(36).slice(2,5):String(i).padStart(4,'0'))+Math.random().toString(36).slice(2,4);
 const qrClean=v=>String(v==null?'':v).replace(/\s+/g,' ').trim();
-let qrF={q:'',sec:'',pl:'',as:''}, qrSel=new Set(), qrSub=null, qrArmed=null, qrAssign=null;
+let qrF={q:'',sec:'',pl:'',mat:'',as:''}, qrSel=new Set(), qrSub=null, qrArmed=null, qrAssign=null;
 function closeQr(){S.qrOpen=false;qrSub=null;qrAssign=null;qrSel.clear();$('qrview').replaceChildren()}
 function openQr(){S.qrOpen=true;qrSub=null;qrAssign=null;renderQr()}
 /* papelera que tiene asignado cada QR */
 function qrBins(){const m=new Map();for(const b of S.bins.values()) if(b.qr&&S.qr.has(b.qr)&&!m.has(b.qr)) m.set(b.qr,b);return m}
 function openQrAssign(b){
   if(!S.canWrite){toast('Tu acceso es de solo lectura.');return}
-  S.qrOpen=true; qrSub=null; qrAssign=b.id; qrF.q=''; qrF.pl=''; qrF.as='';
+  S.qrOpen=true; qrSub=null; qrAssign=b.id; qrF.q=''; qrF.pl=''; qrF.mat=''; qrF.as='';
   const sc=secOf(b), secs=new Set([...S.qr.values()].map(r=>r.sec)); qrF.sec=sc&&secs.has(sc)?sc:'';
   renderQr();
 }
@@ -1569,7 +1572,7 @@ async function unassignQr(b){
 function qrFiltered(){
   const q=qrF.q.trim().toLowerCase();
   const qb=qrF.as?qrBins():null;
-  return qrSorted().filter(r=>(!qrF.sec||r.sec===qrF.sec)&&(!qrF.pl||r.pl===qrF.pl)&&(!qb||(qrF.as==='si')===qb.has(r.id))&&(!q||(r.sec+' '+r.pl+' '+r.ub+' '+r.cont+' '+r.mat+' '+r.qr).toLowerCase().includes(q)));
+  return qrSorted().filter(r=>(!qrF.sec||r.sec===qrF.sec)&&(!qrF.pl||r.pl===qrF.pl)&&(!qrF.mat||r.mat===qrF.mat)&&(!qb||(qrF.as==='si')===qb.has(r.id))&&(!q||(r.sec+' '+r.pl+' '+r.ub+' '+r.cont+' '+r.mat+' '+r.qr).toLowerCase().includes(q)));
 }
 function renderQr(){
   const box=$('qrview'); const prev=box.querySelector('.lvscroll'); const st0=prev?prev.scrollTop:0; box.replaceChildren(); if(!S.qrOpen) return;
@@ -1587,11 +1590,13 @@ function renderQr(){
     s.onchange=()=>{qrF[key]=s.value;renderQr()};return s};
   const asel=el('select','field'); asel.setAttribute('aria-label','Asignación'); for(const [v,t] of [['','Asignación: todas'],['si','Asignados a una papelera'],['no','Sin asignar']]){const o=el('option',null,t);o.value=v;if(v===qrF.as)o.selected=true;asel.append(o)}
   asel.onchange=()=>{qrF.as=asel.value;renderQr()};
-  tools.append(q,mk('sec','Sección'),mk('pl','Planta'),asel); modal.append(tools);
+  tools.append(q,mk('sec','Sección'),mk('pl','Planta'),mk('mat','Material'),asel); modal.append(tools);
   const binOf=qrBins(), ab=qrAssign?S.bins.get(qrAssign):null;
   if(qrAssign&&!ab) qrAssign=null;
+  const curRow=ab&&ab.qr?S.qr.get(ab.qr):null;
+  if(curRow){const i=rows.findIndex(r=>r.id===curRow.id); if(i>=0) rows.splice(i,1); rows.unshift(curRow)}
   if(ab){const bn=el('div','banner qrasg'); const mp=S.maps.get(ab.map);
-    bn.append(el('span',null,`Elige el QR para la papelera ${T(ab.type).code} de la celda ${cellRef(ab.r,ab.c)}${mp?' ('+mp.name+')':''} y pulsa «Asignar».`));
+    bn.append(el('span',null,curRow?`Papelera ${T(ab.type).code} de la celda ${cellRef(ab.r,ab.c)}${mp?' ('+mp.name+')':''}: su QR actual va el primero. Pulsa ✎ para cambiarle el nombre o «Asignar» en otro para cambiarlo.`:`Elige el QR para la papelera ${T(ab.type).code} de la celda ${cellRef(ab.r,ab.c)}${mp?' ('+mp.name+')':''} y pulsa «Asignar».`));
     const cx=el('button','btn','Cancelar'); cx.type='button'; cx.onclick=closeQr; bn.append(cx); modal.append(bn)}
   const acts=el('div','lvtools');
   const btn=(t,fn,cls,dis)=>{const b=el('button','btn'+(cls?' '+cls:''),t);b.type='button';b.disabled=!!dis;b.onclick=fn;return b};
@@ -1611,9 +1616,9 @@ function renderQr(){
   const c0=el('th'); c0.append(all0); hr.append(c0); for(const [,l] of QRCOLS) hr.append(el('th',null,l)); hr.append(el('th',null,'Texto del QR'),el('th',null,'Papelera'),el('th')); th.append(hr); tb.append(th);
   const tbd=el('tbody');
   for(const r of rows.slice(0,600)){
-    const tr=el('tr'); const c=el('td'); const cb=el('input'); cb.type='checkbox'; cb.checked=qrSel.has(r.id); cb.setAttribute('aria-label','Marcar fila'); cb.onchange=()=>{cb.checked?qrSel.add(r.id):qrSel.delete(r.id);renderQr()}; c.append(cb); tr.append(c);
+    const tr=el('tr'); if(curRow&&r.id===curRow.id){tr.className='qrcur';tr.id='qrcurrow'} const c=el('td'); const cb=el('input'); cb.type='checkbox'; cb.checked=qrSel.has(r.id); cb.setAttribute('aria-label','Marcar fila'); cb.onchange=()=>{cb.checked?qrSel.add(r.id):qrSel.delete(r.id);renderQr()}; c.append(cb); tr.append(c);
     for(const [k] of QRCOLS) tr.append(el('td',null,r[k]||''));
-    tr.append(el('td','qrt',r.qr));
+    {const td=el('td','qrt',r.qr); if(curRow&&r.id===curRow.id) td.prepend(el('span','curtag','QR actual de esta papelera')); tr.append(td)}
     {const td=el('td','qrb'), bb=binOf.get(r.id);
       if(bb){const mp=S.maps.get(bb.map); const g=btn(`📍 Asignado · ${cellRef(bb.r,bb.c)}`,()=>{closeQr();jumpTo(bb,3)}); g.classList.add('sm','asg'); g.title=`Ver en planta: ${T(bb.type).code} en ${cellRef(bb.r,bb.c)}${mp?' · '+mp.name:''}`; td.append(g)}
       else td.append(el('span','hint','Sin asignar'));
